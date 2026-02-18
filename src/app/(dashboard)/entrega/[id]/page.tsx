@@ -1,3 +1,4 @@
+
 import { createClient } from "@/utils/supabase/server"
 import { DeliveryList, ClientDelivery } from "../delivery-list"
 import { getDeliveryById } from "../actions"
@@ -8,11 +9,15 @@ interface EditDeliveryPageProps {
     params: Promise<{
         id: string
     }>
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-export default async function EditDeliveryPage({ params }: EditDeliveryPageProps) {
-    const paramsAwaited = await params
+export default async function EditDeliveryPage(props: EditDeliveryPageProps) {
+    const paramsAwaited = await props.params
     const { id } = paramsAwaited
+
+    const searchParamsAwaited = await props.searchParams
+    const clientId = searchParamsAwaited?.clientId as string | undefined
 
     // We treat ID as string mainly, but it could be number-like string.
     // Since our components now handle string | number, we can just pass it.
@@ -54,9 +59,15 @@ export default async function EditDeliveryPage({ params }: EditDeliveryPageProps
         return <div>Erro ao carregar dados.</div>
     }
 
+    // Filter deliveries if clientId is provided
+    let displayedDeliveries = deliveryData.deliveries
+    if (clientId) {
+        displayedDeliveries = deliveryData.deliveries.filter((d: any) => d.clientId === clientId)
+    }
+
     return (
         <DeliveryList
-            initialDeliveries={deliveryData.deliveries}
+            initialDeliveries={displayedDeliveries}
             allProducts={allProducts}
             allClients={clients}
             deliveryId={id}
