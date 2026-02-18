@@ -1,0 +1,584 @@
+'use client'
+
+import { useState, useMemo } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import { Button } from "@/components/ui/button"
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { ArrowLeft, Trash2 } from "lucide-react"
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { updateClientAction, deleteClientAction } from './actions'
+import { DeleteConfirmationDrawer } from "@/components/delete-confirmation-drawer"
+
+// Trigger recompile
+
+
+// Schema (reused from creation logic or slightly modified)
+const clientFormSchema = z.object({
+    type: z.enum(["PF", "PJ"]),
+    name: z.string().min(2, "Nome é obrigatório"),
+    razao_social: z.string().optional(),
+    document: z.string().min(1, "CPF/CNPJ é obrigatório"),
+    ie: z.string().optional(),
+    email: z.string().email("Email inválido").optional().or(z.literal('')),
+    whatsapp: z.string().optional(),
+    address_zip: z.string().optional(),
+    address_street: z.string().optional(),
+    address_number: z.string().optional(),
+    address_district: z.string().optional(),
+    address_city: z.string().optional(),
+    address_state: z.string().optional(),
+})
+
+interface Product {
+    id: string
+    name: string
+    unit: string
+    price: number
+}
+
+interface ClientData {
+    id: string
+    type: "PF" | "PJ"
+    name: string
+    razao_social: string | null
+    document: string
+    ie: string | null
+    email: string | null
+    whatsapp: string | null
+    address_zip: string | null
+    address_street: string | null
+    address_number: string | null
+    address_district: string | null
+    address_city: string | null
+    address_state: string | null
+    delivery_schedule: any
+    custom_prices: any
+}
+
+export function EditClientForm({ client, products }: { client: ClientData; products: Product[] }) {
+    const router = useRouter()
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
+
+    // Form definition with default values from client
+    const form = useForm<z.infer<typeof clientFormSchema>>({
+        resolver: zodResolver(clientFormSchema),
+        defaultValues: {
+            type: client.type,
+            name: client.name,
+            razao_social: client.razao_social || "",
+            document: client.document,
+            ie: client.ie || "",
+            email: client.email || "",
+            whatsapp: client.whatsapp || "",
+            address_zip: client.address_zip || "",
+            address_street: client.address_street || "",
+            address_number: client.address_number || "",
+            address_district: client.address_district || "",
+            address_city: client.address_city || "",
+            address_state: client.address_state || "",
+        },
+    })
+
+    // Prepare initial state from client data - Memoize to avoid re-creation on every render
+    const initialSelectedProducts = useMemo(() => {
+        const rawIds = (client.custom_prices as any[])?.map((p: any) => p.id) || []
+        // Filter out IDs that no longer exist in the products list (e.g. deleted products)
+        return rawIds.filter(id => products.some(p => p.id === id))
+    }, [client.custom_prices, products])
+
+    const initialProductPrices = useMemo(() => (client.custom_prices as any[])?.reduce((acc: any, p: any) => {
+        // Only include prices for products that still exist
+        if (products.some(prod => prod.id === p.id)) {
+            acc[p.id] = p.price
+        }
+        return acc
+    }, {}) || {}, [client.custom_prices, products])
+    const initialSchedule = useMemo(() => client.delivery_schedule || {}, [client.delivery_schedule])
+
+    const [selectedProducts, setSelectedProducts] = useState<string[]>(initialSelectedProducts)
+    const [productPrices, setProductPrices] = useState<Record<string, number>>(initialProductPrices)
+    const [deliverySchedule, setDeliverySchedule] = useState<Record<string, Record<string, number>>>(initialSchedule)
+
+    const daysOfWeek = [
+        { id: '1', label: 'Segunda' },
+        { id: '2', label: 'Terça' },
+        { id: '3', label: 'Quarta' },
+        { id: '4', label: 'Quinta' },
+        { id: '5', label: 'Sexta' },
+        { id: '6', label: 'Sábado' },
+        { id: '0', label: 'Domingo' },
+    ]
+
+    // Check for changes in custom state
+    const hasCustomChanges = useMemo(() => {
+        const sortedSelected = [...selectedProducts].sort()
+        const sortedInitialSelected = [...initialSelectedProducts].sort()
+        const productsChanged = JSON.stringify(sortedSelected) !== JSON.stringify(sortedInitialSelected)
+
+        // Compare prices for selected products only
+        const currentPrices = selectedProducts.reduce((acc, pid) => ({ ...acc, [pid]: productPrices[pid] || products.find(p => p.id === pid)?.price || 0 }), {})
+        const originalPrices = selectedProducts.reduce((acc, pid) => ({ ...acc, [pid]: initialProductPrices[pid] || products.find(p => p.id === pid)?.price || 0 }), {})
+        const pricesChanged = JSON.stringify(currentPrices) !== JSON.stringify(originalPrices)
+
+        const scheduleChanged = JSON.stringify(deliverySchedule) !== JSON.stringify(initialSchedule)
+
+        return productsChanged || pricesChanged || scheduleChanged
+    }, [selectedProducts, productPrices, deliverySchedule, initialSelectedProducts, initialProductPrices, initialSchedule, products])
+
+    // Debug logs removed
+
+    const hasChanges = form.formState.isDirty || hasCustomChanges
+
+    async function onSubmit(values: z.infer<typeof clientFormSchema>) {
+        if (isSubmitting) return
+        setIsSubmitting(true)
+        setError(null)
+
+        try {
+            const data = {
+                ...values,
+                products: selectedProducts.map(pid => ({
+                    id: pid,
+                    price: productPrices[pid] || products.find(p => p.id === pid)?.price || 0
+                })),
+                schedule: deliverySchedule
+            }
+
+            console.log("Updating Client Data:", data)
+            await updateClientAction(client.id, data)
+        } catch (err) {
+            console.error("Failed to update client:", err)
+            setError(err instanceof Error ? err.message : "Erro ao atualizar cliente.")
+            setIsSubmitting(false)
+        }
+    }
+
+    async function handleDelete() {
+        if (isDeleting) return
+        setIsDeleting(true)
+        try {
+            await deleteClientAction(client.id)
+        } catch (err) {
+            console.error("Failed to delete client:", err)
+            // Ideally show toast error here
+            setIsDeleting(false)
+        }
+    }
+
+    const toggleProduct = (productId: string) => {
+        setSelectedProducts(prev =>
+            prev.includes(productId)
+                ? prev.filter(p => p !== productId)
+                : [...prev, productId]
+        )
+    }
+
+    return (
+        <div className="pb-24 space-y-6">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Link href="/pessoas">
+                        <Button variant="ghost" size="icon">
+                            <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                    </Link>
+                    <h1 className="text-2xl font-bold tracking-tight">Editar Cliente</h1>
+                </div>
+
+                <DeleteConfirmationDrawer
+                    title="Excluir Cliente"
+                    description="Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita."
+                    onConfirm={handleDelete}
+                    isPending={isDeleting}
+                />
+            </div>
+
+            {error && (
+                <div className="bg-destructive/15 text-destructive p-3 rounded-md text-sm font-medium">
+                    {error}
+                </div>
+            )}
+
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <Tabs defaultValue="data" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="data">Dados</TabsTrigger>
+                            <TabsTrigger value="products">Produtos</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="data" className="space-y-4 mt-4">
+                            <Card>
+                                <CardHeader><CardTitle>Informações Básicas</CardTitle></CardHeader>
+                                <CardContent className="space-y-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="type"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Tipo de Pessoa *</FormLabel>
+                                                <FormControl>
+                                                    <Tabs
+                                                        onValueChange={(val: string) => field.onChange(val as "PF" | "PJ")}
+                                                        value={field.value}
+                                                        className="w-full"
+                                                    >
+                                                        <TabsList className="grid w-full grid-cols-2">
+                                                            <TabsTrigger value="PF">Pessoa Física</TabsTrigger>
+                                                            <TabsTrigger value="PJ">Pessoa Jurídica</TabsTrigger>
+                                                        </TabsList>
+                                                    </Tabs>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Nome Completo *</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Nome do cliente" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {form.watch("type") === "PJ" && (
+                                        <FormField
+                                            control={form.control}
+                                            name="razao_social"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Razão Social *</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Razão Social" {...field} value={field.value || ""} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    )}
+
+                                    <FormField
+                                        control={form.control}
+                                        name="document"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>CPF/CNPJ *</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Documento"
+                                                        {...field}
+                                                        onChange={(e) => {
+                                                            let value = e.target.value.replace(/\D/g, '')
+                                                            if (form.getValues('type') === 'PF') {
+                                                                // CPF formatting
+                                                                if (value.length <= 11) {
+                                                                    value = value.replace(/(\d{3})(\d)/, '$1.$2')
+                                                                    value = value.replace(/(\d{3})(\d)/, '$1.$2')
+                                                                    value = value.replace(/(\d{3})(\d{1,2})/, '$1-$2')
+                                                                }
+                                                            } else {
+                                                                // CNPJ formatting
+                                                                value = value.replace(/^(\d{2})(\d)/, '$1.$2')
+                                                                value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+                                                                value = value.replace(/\.(\d{3})(\d)/, '.$1/$2')
+                                                                value = value.replace(/(\d{4})(\d)/, '$1-$2')
+                                                            }
+                                                            field.onChange(value)
+                                                        }}
+                                                        maxLength={form.getValues('type') === 'PF' ? 14 : 18}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="email"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Email de envio de nota</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="email@exemplo.com" {...field} value={field.value || ""} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {/* Whatsapp field added if supported in schema, seemingly it is based on previous file read */}
+                                    <FormField
+                                        control={form.control}
+                                        name="whatsapp"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Whatsapp</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="(00) 00000-0000" {...field} value={field.value || ""} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader><CardTitle>Endereço</CardTitle></CardHeader>
+                                <CardContent className="space-y-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="address_zip"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>CEP</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="00000-000"
+                                                        {...field}
+                                                        value={field.value || ""}
+                                                        maxLength={9}
+                                                        onChange={(e) => {
+                                                            let value = e.target.value.replace(/\D/g, '')
+                                                            value = value.replace(/(\d{5})(\d)/, '$1-$2')
+                                                            field.onChange(value)
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="address_street"
+                                            render={({ field }) => (
+                                                <FormItem className="col-span-2">
+                                                    <FormLabel>Endereço</FormLabel>
+                                                    <FormControl><Input placeholder="Rua, Av..." {...field} value={field.value || ""} /></FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="address_number"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Número</FormLabel>
+                                                    <FormControl><Input placeholder="123" {...field} value={field.value || ""} /></FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="address_district"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Bairro</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Bairro" {...field} value={field.value || ""} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <div className="col-span-2 grid grid-cols-4 gap-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="address_city"
+                                                render={({ field }) => (
+                                                    <FormItem className="col-span-3">
+                                                        <FormLabel>Município</FormLabel>
+                                                        <FormControl>
+                                                            <Input placeholder="Cidade" {...field} value={field.value || ""} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="address_state"
+                                                render={({ field }) => (
+                                                    <FormItem className="col-span-1">
+                                                        <FormLabel>UF</FormLabel>
+                                                        <FormControl>
+                                                            <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
+                                                                <FormControl>
+                                                                    <SelectTrigger className="h-10 w-full">
+                                                                        <SelectValue placeholder="UF" />
+                                                                    </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent>
+                                                                    <SelectItem value="SP">SP</SelectItem>
+                                                                    <SelectItem value="RJ">RJ</SelectItem>
+                                                                    <SelectItem value="MG">MG</SelectItem>
+                                                                    {/* Add other states */}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="products" className="space-y-4 mt-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Produtos Disponíveis</CardTitle>
+                                    <CardDescription>Selecione os produtos e defina preços personalizados.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {products.map(product => (
+                                        <div key={product.id} className="flex items-center space-x-4">
+                                            <Checkbox
+                                                id={`edit-product-${product.id}`}
+                                                checked={selectedProducts.includes(product.id)}
+                                                onCheckedChange={() => toggleProduct(product.id)}
+                                            />
+                                            <div className="flex-1">
+                                                <label htmlFor={`edit-product-${product.id}`} className="font-medium cursor-pointer">
+                                                    {product.name} ({product.unit})
+                                                </label>
+                                            </div>
+                                            {selectedProducts.includes(product.id) && (
+                                                <div className="w-24">
+                                                    <Input
+                                                        type="number"
+                                                        step="0.01"
+                                                        defaultValue={productPrices[product.id] || product.price}
+                                                        onChange={(e) => setProductPrices(prev => ({ ...prev, [product.id]: parseFloat(e.target.value) }))}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                                    <CardTitle>Programação de Entrega</CardTitle>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setDeliverySchedule({})}
+                                    >
+                                        Limpar
+                                    </Button>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    {daysOfWeek.map(day => {
+                                        const isDayEnabled = !!deliverySchedule[day.id]
+                                        return (
+                                            <div key={day.id} className="border-b pb-4 last:border-0">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="font-medium">{day.label}</span>
+                                                    <Switch
+                                                        checked={isDayEnabled}
+                                                        onCheckedChange={(checked) => {
+                                                            setDeliverySchedule(prev => {
+                                                                const newState = { ...prev }
+                                                                if (checked) {
+                                                                    newState[day.id] = {}
+                                                                } else {
+                                                                    delete newState[day.id]
+                                                                }
+                                                                return newState
+                                                            })
+                                                        }}
+                                                    />
+                                                </div>
+                                                {isDayEnabled && (
+                                                    <div className="pl-4 space-y-2">
+                                                        {selectedProducts.map(pid => {
+                                                            const product = products.find(p => p.id === pid)
+                                                            return (
+                                                                <div key={pid} className="flex items-center justify-between text-sm">
+                                                                    <span>{product?.name}</span>
+                                                                    <Input
+                                                                        className="w-24 h-8"
+                                                                        type="number"
+                                                                        placeholder="Qtd"
+                                                                        min="0"
+                                                                        value={deliverySchedule[day.id]?.[pid] || ''}
+                                                                        onChange={(e) => {
+                                                                            const val = e.target.value
+                                                                            const qty = val === '' ? 0 : parseFloat(val)
+                                                                            setDeliverySchedule(prev => ({
+                                                                                ...prev,
+                                                                                [day.id]: {
+                                                                                    ...(prev[day.id] || {}),
+                                                                                    [pid]: qty
+                                                                                }
+                                                                            }))
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+
+                    <div className="flex flex-col gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => router.push('/pessoas')}
+                        >
+                            Cancelar
+                        </Button>
+                        {hasChanges && (
+                            <Button type="submit" className="w-full" disabled={isSubmitting}>
+                                {isSubmitting ? "Salvando..." : "Salvar Alterações"}
+                            </Button>
+                        )}
+                    </div>
+                </form>
+            </Form>
+        </div>
+    )
+}
