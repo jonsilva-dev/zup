@@ -33,8 +33,8 @@ export default async function FaturaDetalhePage({
     // Format month for display
     const [y, m] = month.split('-')
     const dateObj = new Date(parseInt(y), parseInt(m) - 1)
-    const monthName = dateObj.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-    const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1)
+    const monthName = dateObj.toLocaleDateString('pt-BR', { month: 'long' })
+    const capitalizedMonth = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} - ${y}`
 
     return (
         <div className="pb-24 space-y-6">
@@ -116,8 +116,8 @@ export default async function FaturaDetalhePage({
                         // Format history month
                         const [hy, hm] = hist.month.split('-')
                         const hDate = new Date(parseInt(hy), parseInt(hm) - 1)
-                        const hMonthName = hDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-                        const hCapMonth = hMonthName.charAt(0).toUpperCase() + hMonthName.slice(1)
+                        const hMonthName = hDate.toLocaleDateString('pt-BR', { month: 'long' })
+                        const hCapMonth = `${hMonthName.charAt(0).toUpperCase() + hMonthName.slice(1)} - ${hy}`
                         const isCurrent = hist.month === month
 
                         return (

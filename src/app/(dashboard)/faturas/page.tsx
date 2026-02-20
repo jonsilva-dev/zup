@@ -38,17 +38,14 @@ export default async function FaturasPage({
     // Format month name for display
     const [y, m] = selectedMonth.split('-')
     const dateObj = new Date(parseInt(y), parseInt(m) - 1)
-    const monthName = dateObj.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-    const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1)
+    const monthName = dateObj.toLocaleDateString('pt-BR', { month: 'long' })
+    const capitalizedMonth = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} - ${y}`
 
     return (
         <div className="pb-24 space-y-6">
             <div className="space-y-4">
-                <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold tracking-tight">Faturas</h1>
-                    <p className="text-muted-foreground text-sm">
-                        Gerencie os fechamentos mensais por cliente.
-                    </p>
                 </div>
 
                 <div className="flex items-center justify-between">
