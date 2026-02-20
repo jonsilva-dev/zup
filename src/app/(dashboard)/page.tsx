@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DollarSign, TrendingUp } from "lucide-react"
+import { DollarSign, TrendingUp, TrendingDown } from "lucide-react"
 import { ChartOverview } from "@/components/chart-overview"
 
 import { getRecentDeliveries, getDashboardStats, getCurrentUser, getAvailableMonths } from "./actions"
@@ -50,8 +50,10 @@ export default async function DashboardPage({
             <div className="grid gap-4 md:grid-cols-3">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Custos</CardTitle>
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-base font-medium text-neutral-600">Custos</CardTitle>
+                        <div className="p-2 bg-muted rounded-full">
+                            <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">R$ {formatCurrency(summary.costs)}</div>
@@ -59,8 +61,10 @@ export default async function DashboardPage({
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Vendas</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-base font-medium text-neutral-600">Vendas</CardTitle>
+                        <div className="p-2 bg-muted rounded-full">
+                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">R$ {formatCurrency(summary.sales)}</div>
@@ -68,8 +72,10 @@ export default async function DashboardPage({
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Resultado</CardTitle>
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-base font-medium text-neutral-600">Resultado</CardTitle>
+                        <div className="p-2 bg-muted rounded-full">
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className={`text-2xl font-bold ${summary.result >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -81,7 +87,7 @@ export default async function DashboardPage({
 
             <Card className="col-span-4">
                 <CardHeader>
-                    <CardTitle>Desempenho diário</CardTitle>
+                    <CardTitle>Faturamento por Cliente</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <ChartOverview data={chartData} />

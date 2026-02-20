@@ -1,39 +1,170 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 
 type ChartData = {
     name: string
-    sales: number
-    cost: number
+    value: number
 }
 
 interface ChartOverviewProps {
     data: ChartData[]
 }
 
+// A vibrant, premium color palette for the donut slices
+const COLORS = [
+    '#0ea5e9', // Sky blue
+    '#f43f5e', // Rose
+    '#8b5cf6', // Violet
+    '#10b981', // Emerald
+    '#f59e0b', // Amber
+    '#ec4899', // Pink
+    '#3b82f6', // Blue
+    '#14b8a6', // Teal
+    '#84cc16', // Lime
+    '#6366f1', // Indigo
+    '#94a3b8', // Slate (for 'Others' or empty)
+]
+
 export function ChartOverview({ data }: ChartOverviewProps) {
     const [mounted, setMounted] = useState(false)
+    const [activeIndex, setActiveIndex] = useState<number | null>(null)
+    const [touchStart, setTouchStart] = useState<number | null>(null)
+    const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
     useEffect(() => {
         setMounted(true)
-    }, [])
+        if (data && data.length > 0 && data[0].name !== "Sem dados") {
+            setActiveIndex(0) // Default to first item
+        }
+    }, [data])
 
     if (!mounted) return <div className="h-[350px] w-full flex items-center justify-center text-muted-foreground">Carregando gráfico...</div>
 
+    const totalRevenue = data.reduce((acc, curr) => acc + (curr.name === "Sem dados" ? 0 : curr.value), 0)
+    const activeItem = activeIndex !== null && data[activeIndex] ? data[activeIndex] : null
+    const activePercentage = activeItem && totalRevenue > 0 ? ((activeItem.value / totalRevenue) * 100).toFixed(1) : "0.0"
+
+    const onPieClick = (_: any, index: number) => {
+        if (data[index].name !== "Sem dados") {
+            setActiveIndex(index)
+        }
+    }
+
+    // Touch handlers for swipe (carousel effect)
+    const minSwipeDistance = 50
+
+    const onTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null) // reset touch end
+        setTouchStart(e.targetTouches[0].clientX)
+    }
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        setTouchEnd(e.targetTouches[0].clientX)
+    }
+
+    const onTouchEndHandler = () => {
+        if (!touchStart || !touchEnd || activeIndex === null || data[0].name === "Sem dados") return
+        const distance = touchStart - touchEnd
+        const isLeftSwipe = distance > minSwipeDistance
+        const isRightSwipe = distance < -minSwipeDistance
+
+        if (isLeftSwipe && activeIndex < data.length - 1) {
+            // Swipe left (next item)
+            setActiveIndex(activeIndex + 1)
+        }
+        if (isRightSwipe && activeIndex > 0) {
+            // Swipe right (prev item)
+            setActiveIndex(activeIndex - 1)
+        }
+    }
+
     return (
-        <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={data}>
-                <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `R$${value}`} />
-                <Tooltip
-                    formatter={(value: number | undefined) => [`R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, undefined]}
-                    labelStyle={{ color: 'black' }}
-                />
-                <Line type="monotone" dataKey="sales" stroke="#10b981" strokeWidth={2} name="Vendas" />
-                <Line type="monotone" dataKey="cost" stroke="#ef4444" strokeWidth={2} name="Custos" />
-            </LineChart>
-        </ResponsiveContainer>
+        <div
+            className="flex flex-col items-center select-none"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEndHandler}
+        >
+            <div className="h-[280px] w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie
+                            data={data}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={70} // Thicker and bigger
+                            outerRadius={110}
+                            paddingAngle={2}
+                            startAngle={90} // Start at top
+                            endAngle={-270} // Go clockwise
+                            dataKey="value"
+                            stroke="none"
+                            onClick={onPieClick}
+                            className="cursor-pointer outline-none"
+                            // @ts-ignore
+                            activeIndex={activeIndex ?? undefined}
+                            activeShape={(props: any) => {
+                                const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+                                return (
+                                    <g>
+                                        <path
+                                            d={`M ${cx + (outerRadius + 8) * Math.cos(-startAngle * Math.PI / 180)} ${cy + (outerRadius + 8) * Math.sin(-startAngle * Math.PI / 180)} A ${outerRadius + 8} ${outerRadius + 8} 0 ${endAngle - startAngle > 180 ? 1 : 0} 1 ${cx + (outerRadius + 8) * Math.cos(-endAngle * Math.PI / 180)} ${cy + (outerRadius + 8) * Math.sin(-endAngle * Math.PI / 180)} L ${cx + (innerRadius - 4) * Math.cos(-endAngle * Math.PI / 180)} ${cy + (innerRadius - 4) * Math.sin(-endAngle * Math.PI / 180)} A ${innerRadius - 4} ${innerRadius - 4} 0 ${endAngle - startAngle > 180 ? 1 : 0} 0 ${cx + (innerRadius - 4) * Math.cos(-startAngle * Math.PI / 180)} ${cy + (innerRadius - 4) * Math.sin(-startAngle * Math.PI / 180)} Z`}
+                                            fill={fill}
+                                            opacity={1}
+                                        />
+                                    </g>
+                                );
+                            }}
+                        >
+                            {data.map((entry, index) => {
+                                const isActive = activeIndex === index;
+                                return (
+                                    <Cell
+                                        key={`cell-${index}`}
+                                        fill={entry.name === "Sem dados" ? '#e2e8f0' : COLORS[index % COLORS.length]}
+                                        stroke={isActive ? COLORS[index % COLORS.length] : 'none'}
+                                        strokeWidth={isActive ? 2 : 0}
+                                        opacity={activeIndex === null || isActive ? 1 : 0.4}
+                                        style={{ transition: 'all 0.3s ease' }}
+                                    />
+                                )
+                            })}
+                        </Pie>
+                    </PieChart>
+                </ResponsiveContainer>
+            </div>
+
+            {/* Selected item details below the chart */}
+            <div className="mt-4 h-[80px] flex flex-col items-center justify-center text-center px-4 w-full">
+                {activeItem && activeItem.name !== "Sem dados" ? (
+                    <div className="animate-in fade-in zoom-in duration-300">
+                        <p className="text-sm font-medium text-muted-foreground mb-1">{activeItem.name}</p>
+                        <div className="flex items-baseline justify-center gap-2">
+                            <span className="text-2xl font-bold">R$ {activeItem.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <span className="text-sm font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                                {activePercentage}%
+                            </span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-muted-foreground text-sm">
+                        {data[0]?.name === "Sem dados" ? "Nenhum dado para o período" : "Toque ou deslize em uma fatia para ver os detalhes"}
+                    </div>
+                )}
+            </div>
+
+            {data.length > 1 && data[0]?.name !== "Sem dados" && (
+                <div className="flex gap-1 mt-2">
+                    {data.map((_, idx) => (
+                        <div
+                            key={`dot-${idx}`}
+                            className={`h-1.5 rounded-full transition-all duration-300 ${activeIndex === idx ? 'w-4 bg-primary' : 'w-1.5 bg-muted-foreground/30'}`}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
     )
 }

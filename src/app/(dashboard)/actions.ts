@@ -32,7 +32,7 @@ export async function getRecentDeliveries(offset: number = 0, limit: number = 10
 
     const { data, error, count } = await query
         .order('date', { ascending: false })
-        .order('id', { ascending: false }) // Secondary sort for deterministic order
+        .order('created_at', { ascending: false, nullsFirst: false }) // Secondary sort: newest first for same day
         .range(offset, offset + limit - 1)
 
     if (error) {
@@ -64,22 +64,22 @@ export async function getRecentDeliveries(offset: number = 0, limit: number = 10
 export async function getDashboardStats(month?: string) {
     const supabase = await createClient()
 
-    let query = supabase
+    // 1. Fetch Deliveries for Summary
+    let summaryQuery = supabase
         .from('deliveries')
         .select('date, total_sales, total_cost')
-        .order('date', { ascending: true })
 
     if (month) {
         const [year, monthNum] = month.split('-')
         const startDate = `${month}-01`
         const endDate = new Date(parseInt(year), parseInt(monthNum), 0).toISOString().split('T')[0]
-        query = query.gte('date', startDate).lte('date', endDate)
+        summaryQuery = summaryQuery.gte('date', startDate).lte('date', endDate)
     }
 
-    const { data: deliveries, error } = await query
+    const { data: deliveries, error: deliveriesError } = await summaryQuery
 
-    if (error) {
-        console.error("Error fetching dashboard stats:", error)
+    if (deliveriesError) {
+        console.error("Error fetching dashboard summary stats:", deliveriesError)
         throw new Error("Erro ao buscar estatísticas.")
     }
 
@@ -92,70 +92,60 @@ export async function getDashboardStats(month?: string) {
         }
     }, { costs: 0, sales: 0, result: 0 })
 
-    // Calculate Chart Data
-    // If specific month: Group by Day (1, 2, ..., 31)
-    // If all time (no month arg - though current usage will likely always pass month): Group by Month
+    // 2. Fetch Delivery Items for Chart (Revenue by Client)
+    let itemsQuery = supabase
+        .from('delivery_items')
+        .select(`
+            quantity,
+            unit_price,
+            deliveries!inner ( date ),
+            clients ( name, razao_social )
+        `)
 
-    // HOWEVER, the requirement is "dashboard must reflect selected month". 
-    // So distinct logic:
-    // Case 1 (Month Selected): X-Axis = Days of Month.
-    // Case 2 (No Month - rare/default?): Current logic (Group by Month).
+    if (month) {
+        const [year, monthNum] = month.split('-')
+        const startDate = `${month}-01`
+        const endDate = new Date(parseInt(year), parseInt(monthNum), 0).toISOString().split('T')[0]
+        itemsQuery = itemsQuery.gte('deliveries.date', startDate).lte('deliveries.date', endDate)
+    }
 
-    // Just to be safe, if we have a filtered month, show days.
+    const { data: items, error: itemsError } = await itemsQuery
 
-    const chartMap = new Map<string, { sales: number, cost: number, sortKey: string }>()
+    if (itemsError) {
+        console.error("Error fetching dashboard chart stats:", itemsError)
+        throw new Error("Erro ao buscar dados do gráfico.")
+    }
 
-    deliveries.forEach((d: any) => {
-        const [year, m, day] = d.date.split('-')
+    const chartMap = new Map<string, number>()
 
-        let label: string
-        let sortKey: string
+    items?.forEach((item: any) => {
+        const clientName = item.clients?.name || item.clients?.razao_social || "Desconhecido"
+        const revenue = (item.quantity || 0) * (item.unit_price || 0)
 
-        if (month) {
-            // Daily View: "01", "02"... or "Dia 01"
-            label = day
-            sortKey = day
-        } else {
-            // Existing Monthly View
-            // Create date object with T12:00:00 to avoid timezone issues when getting month name
-            const dateObj = new Date(parseInt(year), parseInt(m) - 1, parseInt(day), 12, 0, 0)
-            const monthYear = dateObj.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }) // "fev/26"
-            label = monthYear.charAt(0).toUpperCase() + monthYear.slice(1)
-            sortKey = `${year}-${m}`
-        }
-
-        const current = chartMap.get(label) || { sales: 0, cost: 0, sortKey }
-
-        chartMap.set(label, {
-            sales: current.sales + (d.total_sales || 0),
-            cost: current.cost + (d.total_cost || 0),
-            sortKey
-        })
+        const current = chartMap.get(clientName) || 0
+        chartMap.set(clientName, current + revenue)
     })
 
-    // Convert Map to Array and Sort
-    const chartData = Array.from(chartMap.entries())
-        .map(([name, values]) => ({
+    // Convert Map to Array, sort by revenue descending
+    let chartData = Array.from(chartMap.entries())
+        .map(([name, value]) => ({
             name,
-            sales: values.sales,
-            cost: values.cost,
-            sortKey: values.sortKey
+            value
         }))
-        .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
-        // Remove sortKey before returning
-        .map(({ sortKey, ...rest }) => rest)
+        .sort((a, b) => b.value - a.value)
 
-    // If empty for selected month, maybe fill with at least one empty entry?
-    if (chartData.length === 0 && month) {
-        // Just return empty array, or maybe generic placeholders? 
-        // Recharts handles empty array fine usually, but let's leave it empty to show "no data" visually
-    } else if (chartData.length === 0) {
-        const today = new Date()
-        const monthYear = today.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+    // Optional: Group small clients into "Outros" if there are too many (e.g., > 10)
+    if (chartData.length > 10) {
+        const top = chartData.slice(0, 9)
+        const others = chartData.slice(9).reduce((sum, curr) => sum + curr.value, 0)
+        top.push({ name: 'Outros', value: others })
+        chartData = top
+    }
+
+    if (chartData.length === 0) {
         chartData.push({
-            name: monthYear.charAt(0).toUpperCase() + monthYear.slice(1),
-            sales: 0,
-            cost: 0
+            name: "Sem dados",
+            value: 1 // Provide a small value so the donut renders a generic gray circle if we want, or handle in UI
         })
     }
 

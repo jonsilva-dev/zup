@@ -21,7 +21,9 @@ export function MonthSelector({ minMonth, maxMonth }: MonthSelectorProps) {
     const [year, month] = currentMonth.split('-').map(Number)
     const date = new Date(year, month - 1)
 
-    const formattedDate = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+    const monthName = date.toLocaleDateString('pt-BR', { month: 'long' })
+    const capitalizedMonthName = monthName.charAt(0).toUpperCase() + monthName.slice(1)
+    const formattedDate = `${capitalizedMonthName} - ${year}`
 
     const handlePrevious = () => {
         const prevDate = new Date(year, month - 2) // month is 1-based, so -2 gives prev month 0-based index
@@ -46,7 +48,7 @@ export function MonthSelector({ minMonth, maxMonth }: MonthSelectorProps) {
     const canGoNext = currentMonth < maxMonth
 
     return (
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between w-full gap-4">
             <Button
                 variant="outline"
                 size="icon"
@@ -55,7 +57,7 @@ export function MonthSelector({ minMonth, maxMonth }: MonthSelectorProps) {
             >
                 <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-lg font-medium capitalize min-w-[150px] text-center">
+            <span className="text-lg font-medium capitalize text-center flex-1">
                 {formattedDate}
             </span>
             <Button
