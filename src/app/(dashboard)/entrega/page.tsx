@@ -47,7 +47,13 @@ export default async function EntregaPage() {
         })
         .map(client => {
             const daysSchedule = client.delivery_schedule[today]
-            const productIds = Object.keys(daysSchedule)
+            // Filter product IDs to only include those still present in custom_prices
+            const productIds = Object.keys(daysSchedule).filter(pid => {
+                if (Array.isArray(client.custom_prices)) {
+                    return client.custom_prices.some((cp: any) => cp.id === pid)
+                }
+                return false
+            })
 
             const deliveryProducts = productIds.map(pid => {
                 const product = allProducts.find(p => p.id === pid)

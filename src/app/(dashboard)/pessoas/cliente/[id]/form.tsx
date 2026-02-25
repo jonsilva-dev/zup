@@ -156,13 +156,27 @@ export function EditClientForm({ client, products }: { client: ClientData; produ
         setError(null)
 
         try {
+            // Clean up the schedule to only include selected products
+            const cleanedSchedule = { ...deliverySchedule }
+            for (const day in cleanedSchedule) {
+                for (const pid in cleanedSchedule[day]) {
+                    if (!selectedProducts.includes(pid)) {
+                        delete cleanedSchedule[day][pid]
+                    }
+                }
+                // Optional: delete empty days if preferred
+                // if (Object.keys(cleanedSchedule[day]).length === 0) {
+                //    delete cleanedSchedule[day]
+                // }
+            }
+
             const data = {
                 ...values,
                 products: selectedProducts.map(pid => ({
                     id: pid,
                     price: productPrices[pid] || products.find(p => p.id === pid)?.price || 0
                 })),
-                schedule: deliverySchedule
+                schedule: cleanedSchedule
             }
 
             console.log("Updating Client Data:", data)
