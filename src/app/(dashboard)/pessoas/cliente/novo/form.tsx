@@ -39,6 +39,7 @@ const clientFormSchemaStep1 = z.object({
     address_district: z.string().optional(),
     address_city: z.string().optional(),
     address_state: z.string().optional(),
+    due_day: z.string().optional(),
 })
 
 interface Product {
@@ -59,6 +60,7 @@ export function NewClientForm({ products }: { products: Product[] }) {
             type: "PF",
             name: "",
             document: "",
+            due_day: "",
         },
     })
 
@@ -261,6 +263,29 @@ export function NewClientForm({ products }: { products: Product[] }) {
                                             <FormControl>
                                                 <Input placeholder="(00) 00000-0000" {...field} />
                                             </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="due_day"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Data de Vencimento</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Selecione..." />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="10">Dia 10</SelectItem>
+                                                    <SelectItem value="15">Dia 15</SelectItem>
+                                                    <SelectItem value="20">Dia 20</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                             <FormMessage />
                                         </FormItem>
                                     )}

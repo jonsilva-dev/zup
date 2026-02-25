@@ -22,6 +22,7 @@ export async function createClientAction(data: any) {
         address_district: data.address_district,
         address_city: data.address_city,
         address_state: data.address_state,
+        due_day: data.due_day ? Number(data.due_day) : null,
         // For simplicity storing schedule/prices as jsonb, ideally strictly relational
         delivery_schedule: data.schedule,
         custom_prices: data.products // storing product prices overrides here
@@ -38,6 +39,6 @@ export async function createClientAction(data: any) {
         throw new Error(errorMessage)
     }
 
-    revalidatePath('/pessoas')
+    revalidatePath('/pessoas', 'layout')
     redirect('/pessoas')
 }
