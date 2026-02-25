@@ -92,18 +92,22 @@ export default function EditProductForm({ product }: EditProductFormProps) {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                        <ArrowLeft className="h-4 w-4" />
+            <div className="flex flex-col gap-4">
+                <div>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 -ml-2 text-muted-foreground hover:text-foreground" onClick={() => router.back()}>
+                        <ArrowLeft className="size-6" strokeWidth={1.5} />
                     </Button>
-                    <h1 className="text-2xl font-bold tracking-tight">Editar Produto</h1>
                 </div>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">Editar Produto</h1>
+                    </div>
 
-                <DeleteConfirmationDrawer
-                    onConfirm={handleConfirmDelete}
-                    isPending={isPending}
-                />
+                    <DeleteConfirmationDrawer
+                        onConfirm={handleConfirmDelete}
+                        isPending={isPending}
+                    />
+                </div>
             </div>
 
             <Form {...form}>

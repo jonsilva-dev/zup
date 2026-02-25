@@ -17,8 +17,8 @@ export function BottomNav() {
     ]
 
     return (
-        <div className="fixed bottom-8 left-4 right-4 z-50 rounded-2xl bg-white/30 backdrop-blur-md shadow-xl dark:bg-gray-800/30 border dark:border-gray-700">
-            <nav className="flex justify-around items-center p-2">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 rounded-2xl bg-white/30 backdrop-blur-md shadow-xl dark:bg-gray-800/30 border dark:border-gray-700">
+            <nav className="flex justify-center items-center gap-4 p-2">
                 {links.map((link) => {
                     const Icon = link.icon
                     const isActive = pathname === link.href
@@ -37,7 +37,6 @@ export function BottomNav() {
                                 )}
                             >
                                 <Icon className="h-6 w-6" />
-                                <span className="text-[10px] mt-1 font-medium">{link.label}</span>
                             </Link>
                         )
                     }
@@ -50,11 +49,10 @@ export function BottomNav() {
                                 "flex flex-col items-center justify-center p-2 rounded-lg transition-colors",
                                 isActive
                                     ? "text-black dark:text-white"
-                                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                                    : "text-gray-400 hover:text-gray-900 dark:text-gray-500 dark:hover:text-gray-100"
                             )}
                         >
                             <Icon className="h-6 w-6" />
-                            <span className="text-[10px] mt-1 font-medium">{link.label}</span>
                         </Link>
                     )
                 })}

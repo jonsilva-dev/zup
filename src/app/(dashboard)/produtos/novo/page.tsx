@@ -73,11 +73,15 @@ export default function NewProductPage() {
     }
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <h1 className="text-2xl font-bold tracking-tight">Novo Produto</h1>
+            <div className="flex flex-col gap-4">
+                <div>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 -ml-2 text-muted-foreground hover:text-foreground" onClick={() => router.back()}>
+                        <ArrowLeft className="size-6" strokeWidth={1.5} />
+                    </Button>
+                </div>
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Novo Produto</h1>
+                </div>
             </div>
 
             <Form {...form}>

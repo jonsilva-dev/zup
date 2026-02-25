@@ -196,22 +196,26 @@ export function EditClientForm({ client, products }: { client: ClientData; produ
 
     return (
         <div className="pb-24 space-y-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Link href="/pessoas">
-                        <Button variant="ghost" size="icon">
-                            <ArrowLeft className="h-4 w-4" />
-                        </Button>
-                    </Link>
-                    <h1 className="text-2xl font-bold tracking-tight">Editar Cliente</h1>
+            <div className="flex flex-col gap-4">
+                <div>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 -ml-2 text-muted-foreground hover:text-foreground" asChild>
+                        <Link href="/pessoas">
+                            <ArrowLeft className="size-6" strokeWidth={1.5} />
+                        </Link>
+                    </Button>
                 </div>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">Editar Cliente</h1>
+                    </div>
 
-                <DeleteConfirmationDrawer
-                    title="Excluir Cliente"
-                    description="Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita."
-                    onConfirm={handleDelete}
-                    isPending={isDeleting}
-                />
+                    <DeleteConfirmationDrawer
+                        title="Excluir Cliente"
+                        description="Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita."
+                        onConfirm={handleDelete}
+                        isPending={isDeleting}
+                    />
+                </div>
             </div>
 
             {error && (

@@ -27,13 +27,13 @@ export function Header({ userName }: HeaderProps) {
     const userInitials = getInitials(userName || "Usuário")
 
     return (
-        <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-900 shadow-sm">
+        <header className="flex items-center justify-between px-6 py-4 bg-neutral-200 text-neutral-900">
             <div className="font-bold text-xl tracking-tight">ZUP</div>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Avatar className="cursor-pointer">
                         <AvatarImage src="" />
-                        <AvatarFallback>{userInitials}</AvatarFallback>
+                        <AvatarFallback className="bg-neutral-900 text-neutral-50">{userInitials}</AvatarFallback>
                     </Avatar>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
