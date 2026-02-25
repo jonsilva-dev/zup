@@ -7,7 +7,7 @@ import { redirect } from "next/navigation"
 export async function updateClientAction(id: string, data: any) {
     const supabase = await createSupabaseClient()
 
-    const { error } = await supabase.from('clients').update({
+    const updatePayload = {
         type: data.type,
         name: data.name,
         razao_social: data.razao_social,
@@ -21,9 +21,12 @@ export async function updateClientAction(id: string, data: any) {
         address_district: data.address_district,
         address_city: data.address_city,
         address_state: data.address_state,
+        due_day: data.due_day ? Number(data.due_day) : null,
         delivery_schedule: data.schedule,
         custom_prices: data.products
-    }).eq('id', id)
+    }
+
+    const { error } = await supabase.from('clients').update(updatePayload).eq('id', id)
 
     if (error) {
         console.error("Error updating client", error)
@@ -34,7 +37,9 @@ export async function updateClientAction(id: string, data: any) {
         throw new Error(errorMessage)
     }
 
+    revalidatePath(`/pessoas/cliente/${id}`)
     revalidatePath('/pessoas')
+    revalidatePath('/pessoas', 'layout')
     redirect('/pessoas')
 }
 

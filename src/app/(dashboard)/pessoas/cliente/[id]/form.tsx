@@ -43,6 +43,7 @@ const clientFormSchema = z.object({
     address_district: z.string().optional(),
     address_city: z.string().optional(),
     address_state: z.string().optional(),
+    due_day: z.string().optional(),
 })
 
 interface Product {
@@ -67,6 +68,7 @@ interface ClientData {
     address_district: string | null
     address_city: string | null
     address_state: string | null
+    due_day: string | null
     delivery_schedule: any
     custom_prices: any
 }
@@ -94,6 +96,7 @@ export function EditClientForm({ client, products }: { client: ClientData; produ
             address_district: client.address_district || "",
             address_city: client.address_city || "",
             address_state: client.address_state || "",
+            due_day: client.due_day ? String(client.due_day) : "",
         },
     })
 
@@ -342,6 +345,29 @@ export function EditClientForm({ client, products }: { client: ClientData; produ
                                                 <FormControl>
                                                     <Input placeholder="(00) 00000-0000" {...field} value={field.value || ""} />
                                                 </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="due_day"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Data de Vencimento</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value || undefined}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Selecione..." />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="10">Dia 10</SelectItem>
+                                                        <SelectItem value="15">Dia 15</SelectItem>
+                                                        <SelectItem value="20">Dia 20</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
                                                 <FormMessage />
                                             </FormItem>
                                         )}

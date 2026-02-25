@@ -33,12 +33,12 @@ export function PeopleTabs({ clients, users }: PeopleTabsProps) {
         <div className="space-y-4 pb-32">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold tracking-tight">Pessoas</h1>
-                <Link href={activeTab === "clients" ? "/pessoas/cliente/novo" : "/pessoas/usuario/novo"}>
-                    <Button size="sm">
+                <Button size="sm" asChild>
+                    <Link href={activeTab === "clients" ? "/pessoas/cliente/novo" : "/pessoas/usuario/novo"}>
                         <Plus className="mr-2 h-4 w-4" />
                         {activeTab === "clients" ? "Novo Cliente" : "Novo Usuário"}
-                    </Button>
-                </Link>
+                    </Link>
+                </Button>
             </div>
 
             <Tabs defaultValue="clients" className="w-full" onValueChange={setActiveTab}>
@@ -60,11 +60,11 @@ export function PeopleTabs({ clients, users }: PeopleTabsProps) {
                                             {client.type === 'PF' ? 'Pessoa física' : 'Pessoa jurídica'}
                                         </Badge>
                                     </div>
-                                    <Link href={`/pessoas/cliente/${client.id}`}>
-                                        <Button variant="ghost" size="icon">
+                                    <Button variant="ghost" size="icon" asChild>
+                                        <Link href={`/pessoas/cliente/${client.id}`}>
                                             <Pencil className="h-4 w-4" />
-                                        </Button>
-                                    </Link>
+                                        </Link>
+                                    </Button>
                                 </CardContent>
                             </Card>
                         ))
@@ -84,11 +84,11 @@ export function PeopleTabs({ clients, users }: PeopleTabsProps) {
                                             {user.role === 'admin' ? 'Administrador' : 'Entregador'}
                                         </Badge>
                                     </div>
-                                    <Link href={`/pessoas/usuario/${user.id}`}>
-                                        <Button variant="ghost" size="icon">
+                                    <Button variant="ghost" size="icon" asChild>
+                                        <Link href={`/pessoas/usuario/${user.id}`}>
                                             <Pencil className="h-4 w-4" />
-                                        </Button>
-                                    </Link>
+                                        </Link>
+                                    </Button>
                                 </CardContent>
                             </Card>
                         ))
