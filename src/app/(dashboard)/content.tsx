@@ -32,9 +32,9 @@ export function DashboardContent({ children, user }: DashboardContentProps) {
     })
 
     return (
-        <div suppressHydrationWarning className={`min-h-screen w-full bg-gray-50 dark:bg-gray-950 ${shouldHideNav ? '' : 'pb-32'}`}>
+        <div suppressHydrationWarning className={`min-h-screen w-full bg-neutral-50 dark:bg-neutral-950 ${shouldHideNav ? '' : 'pb-28'}`}>
             {!shouldHideNav && <Header userName={user?.name} />}
-            <main className="flex-1 overflow-auto pb-20 md:pb-0">
+            <main className="flex-1 overflow-auto">
                 <div className="p-6">
                     {children}
                 </div>

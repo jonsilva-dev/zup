@@ -38,22 +38,26 @@ export default async function FaturaDetalhePage({
 
     return (
         <div className="pb-24 space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                        <Link href="/faturas">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 -ml-2">
-                                <ArrowLeft className="h-4 w-4" />
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div className="space-y-4">
+                    <div>
+                        <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 -ml-2 text-muted-foreground hover:text-foreground" asChild>
+                            <Link href="/faturas">
+                                <ArrowLeft className="size-6" strokeWidth={1.5} />
                                 <span className="sr-only">Voltar</span>
-                            </Button>
-                        </Link>
-                        <h1 className="text-2xl font-bold tracking-tight">{client.name}</h1>
+                            </Link>
+                        </Button>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Badge variant={status === 'validated' ? 'secondary' : 'outline'}>
-                            Fatura {status === 'validated' ? 'Validada' : 'Em Aberto'}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground capitalize">{capitalizedMonth}</span>
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-2xl font-bold tracking-tight">{client.name}</h1>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Badge variant={status === 'validated' ? 'secondary' : 'outline'}>
+                                Fatura {status === 'validated' ? 'Validada' : 'Em Aberto'}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground capitalize">{capitalizedMonth}</span>
+                        </div>
                     </div>
                 </div>
 

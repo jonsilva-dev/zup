@@ -27,6 +27,7 @@ const COLORS = [
     '#94a3b8', // Slate (for 'Others' or empty)
 ]
 
+
 export function ChartOverview({ data }: ChartOverviewProps) {
     const [mounted, setMounted] = useState(false)
     const [activeIndex, setActiveIndex] = useState<number | null>(null)
@@ -87,36 +88,25 @@ export function ChartOverview({ data }: ChartOverviewProps) {
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEndHandler}
         >
-            <div className="h-[280px] w-full relative">
+            <div className="h-[220px] w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
                             data={data}
                             cx="50%"
                             cy="50%"
-                            innerRadius={70} // Thicker and bigger
+                            innerRadius={70}
                             outerRadius={110}
                             paddingAngle={2}
-                            startAngle={90} // Start at top
-                            endAngle={-270} // Go clockwise
+                            startAngle={90}
+                            endAngle={-270}
                             dataKey="value"
                             stroke="none"
                             onClick={onPieClick}
                             className="cursor-pointer outline-none"
                             // @ts-ignore
                             activeIndex={activeIndex ?? undefined}
-                            activeShape={(props: any) => {
-                                const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
-                                return (
-                                    <g>
-                                        <path
-                                            d={`M ${cx + (outerRadius + 8) * Math.cos(-startAngle * Math.PI / 180)} ${cy + (outerRadius + 8) * Math.sin(-startAngle * Math.PI / 180)} A ${outerRadius + 8} ${outerRadius + 8} 0 ${endAngle - startAngle > 180 ? 1 : 0} 1 ${cx + (outerRadius + 8) * Math.cos(-endAngle * Math.PI / 180)} ${cy + (outerRadius + 8) * Math.sin(-endAngle * Math.PI / 180)} L ${cx + (innerRadius - 4) * Math.cos(-endAngle * Math.PI / 180)} ${cy + (innerRadius - 4) * Math.sin(-endAngle * Math.PI / 180)} A ${innerRadius - 4} ${innerRadius - 4} 0 ${endAngle - startAngle > 180 ? 1 : 0} 0 ${cx + (innerRadius - 4) * Math.cos(-startAngle * Math.PI / 180)} ${cy + (innerRadius - 4) * Math.sin(-startAngle * Math.PI / 180)} Z`}
-                                            fill={fill}
-                                            opacity={1}
-                                        />
-                                    </g>
-                                );
-                            }}
+                            onMouseEnter={onPieClick} // Make hover and click share the same logic
                         >
                             {data.map((entry, index) => {
                                 const isActive = activeIndex === index;
@@ -141,7 +131,7 @@ export function ChartOverview({ data }: ChartOverviewProps) {
                 {activeItem && activeItem.name !== "Sem dados" ? (
                     <div className="animate-in fade-in zoom-in duration-300">
                         <p className="text-sm font-medium text-muted-foreground mb-1">{activeItem.name}</p>
-                        <div className="flex items-baseline justify-center gap-2">
+                        <div className="flex items-center justify-center gap-2">
                             <span className="text-2xl font-bold">R$ {activeItem.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             <span className="text-sm font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                                 {activePercentage}%

@@ -16,12 +16,34 @@ export default async function EntregaPage() {
 
     // Get today's day of week (0 = Sunday, 1 = Monday, etc.)
     const today = new Date().getDay().toString()
+    const todayStr = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }).split('/').reverse().join('-')
+
+    // Find deliveries already made today
+    const { data: todaysDeliveries } = await supabase
+        .from('deliveries')
+        .select('id')
+        .eq('date', todayStr)
+
+    const deliveryIds = todaysDeliveries?.map((d: any) => d.id) || []
+    const deliveredClientIds = new Set<string>()
+
+    if (deliveryIds.length > 0) {
+        const { data: todayItems } = await supabase
+            .from('delivery_items')
+            .select('client_id')
+            .in('delivery_id', deliveryIds)
+
+        if (todayItems) {
+            todayItems.forEach((item: any) => deliveredClientIds.add(item.client_id))
+        }
+    }
 
     // Filter clients and build delivery list
     const initialDeliveries: ClientDelivery[] = clients
         .filter(client => {
             // Check if client has a schedule for today
-            return client.delivery_schedule && client.delivery_schedule[today]
+            const scheduledForToday = client.delivery_schedule && client.delivery_schedule[today]
+            return scheduledForToday && !deliveredClientIds.has(client.id)
         })
         .map(client => {
             const daysSchedule = client.delivery_schedule[today]

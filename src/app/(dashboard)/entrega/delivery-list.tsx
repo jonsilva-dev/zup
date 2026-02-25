@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription, SheetFooter } from "@/components/ui/sheet"
-import { Plus, Trash, Check, Truck, ArrowLeft } from "lucide-react"
+import { Plus, Trash, Check, Truck, ArrowLeft, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from 'next/navigation'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -14,6 +14,8 @@ import { addClientCustomPrice, saveDeliveryAction, updateDeliveryAction, deleteD
 import { DeleteConfirmationDrawer } from "@/components/delete-confirmation-drawer"
 import { Trash2, Calendar } from "lucide-react"
 import { toast } from "sonner"
+import { EmptyState } from "@/components/empty-state"
+import Link from "next/link"
 
 export interface DeliveryProduct {
     id: string
@@ -267,44 +269,54 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
     return (
         <div className="pb-32 space-y-6">
             <div className="space-y-4">
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                            <ArrowLeft className="h-4 w-4" />
+                <div className="flex flex-col gap-4">
+                    <div>
+                        <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 -ml-2 text-muted-foreground hover:text-foreground" onClick={() => router.back()}>
+                            <ArrowLeft className="size-6" strokeWidth={1.5} />
                         </Button>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight">{deliveryId ? "Editar Entrega" : "Registro de Entrega"}</h1>
-                            <p className="text-sm text-muted-foreground capitalize flex items-center gap-1">
+                            <p className="text-sm text-muted-foreground capitalize flex items-center gap-1 mt-1">
                                 <Calendar className="h-3 w-3" /> {today}
                             </p>
                         </div>
-                    </div>
 
-                    {deliveryId && (
-                        <DeleteConfirmationDrawer
-                            title="Excluir Entrega"
-                            description="Tem certeza que deseja excluir esta entrega permanentemente? Esta ação não pode ser desfeita."
-                            onConfirm={handleDeleteDelivery}
-                            isPending={isDeleting}
-                            trigger={
-                                <Button variant="destructive" size="icon">
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            }
-                        />
-                    )}
+                        {deliveryId && (
+                            <DeleteConfirmationDrawer
+                                title="Excluir Entrega"
+                                description="Tem certeza que deseja excluir esta entrega permanentemente? Esta ação não pode ser desfeita."
+                                onConfirm={handleDeleteDelivery}
+                                isPending={isDeleting}
+                                trigger={
+                                    <Button variant="destructive" size="icon">
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                }
+                            />
+                        )}
+                    </div>
                 </div>
             </div>
 
             <div className="space-y-4">
                 {deliveries.length === 0 ? (
-                    <div className="text-center py-10 text-muted-foreground">
-                        Nenhuma entrega agendada para hoje.
-                    </div>
+                    <EmptyState
+                        title="Todas as entregas agendadas para hoje já foram realizadas."
+                        action={
+                            <Button asChild>
+                                <Link href="/pessoas/cliente/novo">
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Adicionar Cliente
+                                </Link>
+                            </Button>
+                        }
+                    />
                 ) : (
                     deliveries.map((delivery) => (
                         <Card key={delivery.clientId} className="overflow-hidden">
-                            <div className="bg-muted/50 p-4 border-b flex justify-between items-center">
+                            <div className="bg-muted p-4 border-b flex justify-between items-center">
                                 <div className="font-semibold">{delivery.clientName}</div>
                                 <div className="flex items-center gap-2">
                                     <Badge variant="outline">{delivery.products.length} itens</Badge>
@@ -315,7 +327,7 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
                                         isPending={false}
                                         trigger={
                                             <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive">
-                                                <Trash2 className="h-4 w-4" />
+                                                <X className="h-4 w-4" />
                                             </Button>
                                         }
                                     />
@@ -328,17 +340,17 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
                                             <div className="text-sm font-medium">{product.name}</div>
                                             <div className="text-xs text-muted-foreground">{product.unit} - R$ {(product.price || 0).toFixed(2)}</div>
                                         </div>
-                                        <div className="w-20">
+                                        <div className="w-16">
                                             <Input
                                                 type="number"
                                                 value={product.quantity}
                                                 onChange={(e) => handleQuantityChange(delivery.clientId, product.id, parseFloat(e.target.value))}
-                                                className="h-8"
+                                                className="h-8 text-center"
                                                 min="0"
                                             />
                                         </div>
-                                        <Button variant="ghost" size="icon" onClick={() => removeProduct(delivery.clientId, product.id)}>
-                                            <Trash className="h-4 w-4 text-destructive" />
+                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeProduct(delivery.clientId, product.id)}>
+                                            <X className="h-4 w-4 text-destructive" />
                                         </Button>
                                     </div>
                                 ))}
@@ -352,8 +364,7 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
                                         <DrawerTrigger asChild>
                                             <Button
                                                 variant="outline"
-                                                size="icon"
-                                                className="h-8 w-8 rounded-full border-dashed"
+                                                className="w-full h-8 border-dashed text-muted-foreground hover:text-foreground"
                                                 onClick={() => {
                                                     setSelectedClientIdForProduct(delivery.clientId)
                                                     setAddProductOpen(true)
@@ -411,40 +422,42 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
                     ))
                 )}
 
-                <Drawer shouldScaleBackground={false} open={addClientOpen} onOpenChange={setAddClientOpen}>
-                    <DrawerTrigger asChild>
-                        <Button variant="outline" className="w-full border-dashed">
-                            <Plus className="mr-2 h-4 w-4" /> Adicionar Cliente Extra
-                        </Button>
-                    </DrawerTrigger>
-                    <DrawerContent>
-                        <div className="mx-auto w-full max-w-sm">
-                            <DrawerHeader>
-                                <DrawerTitle>Adicionar Cliente</DrawerTitle>
-                            </DrawerHeader>
-                            <div className="p-4 space-y-4">
-                                <Select onValueChange={setClientToAdd} value={clientToAdd}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Selecione um cliente" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {allClients
-                                            .filter(c => !deliveries.find(d => d.clientId === c.id))
-                                            .map(c => (
-                                                <SelectItem key={c.id} value={c.id}>
-                                                    {c.name}
-                                                </SelectItem>
-                                            ))
-                                        }
-                                    </SelectContent>
-                                </Select>
-                                <Button className="w-full" onClick={handleAddClient} disabled={!clientToAdd}>
-                                    Adicionar
-                                </Button>
+                {deliveries.length > 0 && (
+                    <Drawer shouldScaleBackground={false} open={addClientOpen} onOpenChange={setAddClientOpen}>
+                        <DrawerTrigger asChild>
+                            <Button variant="outline" className="w-full border-dashed">
+                                <Plus className="mr-2 h-4 w-4" /> Adicionar Cliente Extra
+                            </Button>
+                        </DrawerTrigger>
+                        <DrawerContent>
+                            <div className="mx-auto w-full max-w-sm">
+                                <DrawerHeader>
+                                    <DrawerTitle>Adicionar Cliente</DrawerTitle>
+                                </DrawerHeader>
+                                <div className="p-4 space-y-4">
+                                    <Select onValueChange={setClientToAdd} value={clientToAdd}>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Selecione um cliente" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {allClients
+                                                .filter(c => !deliveries.find(d => d.clientId === c.id))
+                                                .map(c => (
+                                                    <SelectItem key={c.id} value={c.id}>
+                                                        {c.name}
+                                                    </SelectItem>
+                                                ))
+                                            }
+                                        </SelectContent>
+                                    </Select>
+                                    <Button className="w-full" onClick={handleAddClient} disabled={!clientToAdd}>
+                                        Adicionar
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
-                    </DrawerContent>
-                </Drawer>
+                        </DrawerContent>
+                    </Drawer>
+                )}
             </div>
 
             {/* Confirmation Sheet / FAB */}
