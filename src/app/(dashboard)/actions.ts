@@ -134,13 +134,8 @@ export async function getDashboardStats(month?: string) {
         }))
         .sort((a, b) => b.value - a.value)
 
-    // Optional: Group small clients into "Outros" if there are too many (e.g., > 10)
-    if (chartData.length > 10) {
-        const top = chartData.slice(0, 9)
-        const others = chartData.slice(9).reduce((sum, curr) => sum + curr.value, 0)
-        top.push({ name: 'Outros', value: others })
-        chartData = top
-    }
+    // Do not group small clients into "Outros" - keep one slice per client
+    // (Requested by user)
 
     if (chartData.length === 0) {
         chartData.push({
