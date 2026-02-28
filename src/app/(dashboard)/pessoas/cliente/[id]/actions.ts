@@ -21,9 +21,7 @@ export async function updateClientAction(id: string, data: any) {
         address_district: data.address_district,
         address_city: data.address_city,
         address_state: data.address_state,
-        due_day: data.due_day ? Number(data.due_day) : null,
-        delivery_schedule: data.schedule,
-        custom_prices: data.products
+        due_day: data.due_day ? Number(data.due_day) : null
     }
 
     const { error } = await supabase.from('clients').update(updatePayload).eq('id', id)
@@ -35,6 +33,45 @@ export async function updateClientAction(id: string, data: any) {
             errorMessage = `Erro do banco de dados: ${error.message}`
         }
         throw new Error(errorMessage)
+    }
+
+    // Replace-all Strategy for Prices
+    await supabase.from('client_product_prices').delete().eq('client_id', id)
+    if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+        const pricesToInsert = data.products.map((p: any) => ({
+            client_id: id,
+            product_id: p.id,
+            price: p.price
+        }))
+        await supabase.from('client_product_prices').insert(pricesToInsert)
+    }
+
+    // Replace-all Strategy for Schedules
+    await supabase.from('delivery_schedules').delete().eq('client_id', id)
+    if (data.schedule && typeof data.schedule === 'object') {
+        const schedulesToInsert: any[] = []
+        Object.keys(data.schedule).forEach((dayStr) => {
+            const dayOfWeek = parseInt(dayStr)
+            const productsForDay = data.schedule[dayStr]
+
+            if (productsForDay && typeof productsForDay === 'object') {
+                Object.keys(productsForDay).forEach((productId) => {
+                    const quantity = productsForDay[productId]
+                    if (quantity > 0) {
+                        schedulesToInsert.push({
+                            client_id: id,
+                            day_of_week: dayOfWeek,
+                            product_id: productId,
+                            quantity: quantity
+                        })
+                    }
+                })
+            }
+        })
+
+        if (schedulesToInsert.length > 0) {
+            await supabase.from('delivery_schedules').insert(schedulesToInsert)
+        }
     }
 
     revalidatePath(`/pessoas/cliente/${id}`)
