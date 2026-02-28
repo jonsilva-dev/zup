@@ -296,11 +296,9 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
                     <EmptyState
                         title="Todas as entregas agendadas para hoje já foram realizadas."
                         action={
-                            <Button asChild>
-                                <Link href="/pessoas/cliente/novo">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Adicionar Cliente
-                                </Link>
+                            <Button onClick={() => setAddClientOpen(true)}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Adicionar Cliente
                             </Button>
                         }
                     />
