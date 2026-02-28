@@ -412,41 +412,40 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
                 )}
 
                 {deliveries.length > 0 && (
-                    <Drawer shouldScaleBackground={false} open={addClientOpen} onOpenChange={setAddClientOpen}>
-                        <DrawerTrigger asChild>
-                            <Button variant="outline" className="w-full border-dashed">
-                                <Plus className="mr-2 h-4 w-4" /> Adicionar Cliente Extra
-                            </Button>
-                        </DrawerTrigger>
-                        <DrawerContent>
-                            <div className="mx-auto w-full max-w-sm">
-                                <DrawerHeader>
-                                    <DrawerTitle>Adicionar Cliente</DrawerTitle>
-                                </DrawerHeader>
-                                <div className="p-4 space-y-4">
-                                    <Select onValueChange={setClientToAdd} value={clientToAdd}>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Selecione um cliente" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {allClients
-                                                .filter(c => !deliveries.find(d => d.clientId === c.id))
-                                                .map(c => (
-                                                    <SelectItem key={c.id} value={c.id}>
-                                                        {c.name}
-                                                    </SelectItem>
-                                                ))
-                                            }
-                                        </SelectContent>
-                                    </Select>
-                                    <Button className="w-full" onClick={handleAddClient} disabled={!clientToAdd}>
-                                        Adicionar
-                                    </Button>
-                                </div>
-                            </div>
-                        </DrawerContent>
-                    </Drawer>
+                    <Button variant="outline" className="w-full border-dashed" onClick={() => setAddClientOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" /> Adicionar Cliente Extra
+                    </Button>
                 )}
+
+                <Drawer shouldScaleBackground={false} open={addClientOpen} onOpenChange={setAddClientOpen}>
+                    <DrawerContent>
+                        <div className="mx-auto w-full max-w-sm">
+                            <DrawerHeader>
+                                <DrawerTitle>Adicionar Cliente</DrawerTitle>
+                            </DrawerHeader>
+                            <div className="p-4 space-y-4">
+                                <Select onValueChange={setClientToAdd} value={clientToAdd}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Selecione um cliente" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {allClients
+                                            .filter(c => !deliveries.find(d => d.clientId === c.id))
+                                            .map(c => (
+                                                <SelectItem key={c.id} value={c.id}>
+                                                    {c.name}
+                                                </SelectItem>
+                                            ))
+                                        }
+                                    </SelectContent>
+                                </Select>
+                                <Button className="w-full" onClick={handleAddClient} disabled={!clientToAdd}>
+                                    Adicionar
+                                </Button>
+                            </div>
+                        </div>
+                    </DrawerContent>
+                </Drawer>
             </div>
 
             {/* Confirmation Sheet / FAB */}
@@ -455,7 +454,7 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
                 And show "Salvar alterações" button when changes identified.
             */}
 
-            {!deliveryId && (
+            {!deliveryId && deliveries.length > 0 && (
                 <Sheet open={confirmationOpen} onOpenChange={setConfirmationOpen}>
                     <SheetTrigger asChild>
                         <div className="fixed bottom-6 left-0 right-0 flex justify-center pointer-events-none">
