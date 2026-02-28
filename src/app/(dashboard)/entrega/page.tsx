@@ -38,69 +38,76 @@ export default async function EntregaPage() {
         }
     }
 
-    // Filter clients and build delivery list
-    const initialDeliveries: ClientDelivery[] = clients
-        .filter(client => {
-            // Check if client has a schedule for today
-            const scheduledForToday = client.delivery_schedule && client.delivery_schedule[today]
-            return scheduledForToday && !deliveredClientIds.has(client.id)
-        })
-        .map(client => {
-            const daysSchedule = client.delivery_schedule[today]
-            // Filter product IDs to only include those still present in custom_prices
-            const productIds = Object.keys(daysSchedule).filter(pid => {
-                if (Array.isArray(client.custom_prices)) {
-                    return client.custom_prices.some((cp: any) => cp.id === pid)
-                }
-                return false
-            })
+    // Load Schedules for today, along with related Client and Product and Product custom pricing
+    const { data: rawSchedules, error: scheduleError } = await supabase
+        .from('delivery_schedules')
+        .select(`
+            client_id,
+            product_id,
+            quantity,
+            clients:client_id (
+                id,
+                name,
+                razao_social,
+                client_product_prices (
+                    product_id,
+                    price
+                )
+            ),
+            products:product_id (
+                id,
+                name,
+                unit,
+                cost_price
+            )
+        `)
+        .eq('day_of_week', parseInt(today))
 
-            const deliveryProducts = productIds.map(pid => {
-                const product = allProducts.find(p => p.id === pid)
-                const qty = daysSchedule[pid]
+    if (scheduleError) {
+        console.error("Error fetching schedules:", scheduleError)
+        return <div>Erro ao carregar roteiro de entregas.</div>
+    }
 
-                // Determine price: Custom > Base
-                // custom_prices is Record<string, number> where key is product id
-                let price = 0
-                if (product) {
-                    price = product.price
-                }
+    // Build the delivery list grouped by Client
+    const deliveryMap = new Map<string, ClientDelivery>()
 
-                // Check for custom price
-                if (client.custom_prices) {
-                    // The custom_prices structure might be an array or object depending on how we saved it
-                    // Based on 'novo/form.tsx', it sends:
-                    // products: selectedProducts.map(pid => ({ id, price }))
-                    // So in DB it's likely a JSONB array of objects {id, price}
-                    // OR it could be the Record if we changed it.
-                    // looking at actions.ts: custom_prices: data.products -> which corresponds to the array version.
+    if (rawSchedules) {
+        rawSchedules.forEach((schedule: any) => {
+            if (deliveredClientIds.has(schedule.client_id)) return
+            if (!schedule.clients || !schedule.products) return
 
-                    if (Array.isArray(client.custom_prices)) {
-                        const custom = client.custom_prices.find((cp: any) => cp.id === pid)
-                        if (custom) {
-                            price = custom.price
-                        }
-                    }
-                }
-
-                if (!product) return null
-
-                return {
-                    id: pid,
-                    name: product.name,
-                    quantity: qty,
-                    unit: product.unit,
-                    price: price
-                }
-            }).filter(p => p !== null) as any[] // Filter out nulls
-
-            return {
-                clientId: client.id,
-                clientName: client.name || client.razao_social || "Cliente sem nome",
-                products: deliveryProducts
+            if (!deliveryMap.has(schedule.client_id)) {
+                deliveryMap.set(schedule.client_id, {
+                    clientId: schedule.client_id,
+                    clientName: schedule.clients.name || schedule.clients.razao_social || "Cliente sem nome",
+                    products: []
+                })
             }
+
+            const clientGroup = deliveryMap.get(schedule.client_id)!
+
+            // Find custom price specifically for this product
+            let finalPrice = schedule.products.cost_price || 0
+            const customPrices = schedule.clients?.client_product_prices
+            if (customPrices && Array.isArray(customPrices)) {
+                // PostgREST might return all custom prices for this client, find the matching product
+                const customPriceRow = customPrices.find((cp: any) => cp.product_id === schedule.product_id)
+                if (customPriceRow) {
+                    finalPrice = customPriceRow.price
+                }
+            }
+
+            clientGroup.products.push({
+                id: schedule.product_id,
+                name: schedule.products.name,
+                quantity: schedule.quantity,
+                unit: schedule.products.unit,
+                price: finalPrice
+            })
         })
-        .filter(d => d.products.length > 0) // Only include if there are valid products
+    }
+
+    const initialDeliveries: ClientDelivery[] = Array.from(deliveryMap.values())
 
     return <DeliveryList initialDeliveries={initialDeliveries} allProducts={allProducts} allClients={clients} />
 }

@@ -63,13 +63,33 @@ export function ValidateButton({ clientId, month, total, status, productSummary,
     const handleValidate = async () => {
         setIsLoading(true)
         try {
+            // 1. Atualiza status no banco via server action
             await validateInvoice(clientId, month, total)
+
+            // 2. Chama a API para criar a cobrança
+            if (total > 0) {
+                const response = await fetch(`/api/monthly-invoices/${clientId}/create-charge`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ month, total })
+                })
+
+                if (!response.ok) {
+                    const errorData = await response.json()
+                    throw new Error(errorData.error || 'Erro ao criar cobrança')
+                }
+            }
+
             toast.success("Fatura validada com sucesso!", {
-                description: "O status foi atualizado para validado."
+                description: total > 0
+                    ? "O status foi atualizado para validado e a cobrança foi gerada."
+                    : "O status foi atualizado para validado."
             })
             setIsOpen(false)
-        } catch (error) {
-            toast.error("Erro ao validar fatura")
+        } catch (error: any) {
+            toast.error("Erro na validação da fatura", {
+                description: error.message || "Não foi possível concluir."
+            })
             console.error(error)
         } finally {
             setIsLoading(false)

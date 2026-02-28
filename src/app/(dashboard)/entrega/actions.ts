@@ -6,33 +6,16 @@ import { revalidatePath } from "next/cache"
 export async function addClientCustomPrice(clientId: string, product: { id: string, price: number }) {
     const supabase = await createClient()
 
-    // 1. Fetch current client data
-    const { data: client, error: fetchError } = await supabase
-        .from('clients')
-        .select('custom_prices')
-        .eq('id', clientId)
-        .single()
-
-    if (fetchError) {
-        console.error("Error fetching client for price update", fetchError)
-        throw new Error("Erro ao buscar cliente.")
-    }
-
-    // 2. Update custom_prices array
-    let currentPrices = client.custom_prices || []
-    if (!Array.isArray(currentPrices)) {
-        currentPrices = []
-    }
-
-    // Remove existing if present (upsert logic)
-    const otherPrices = currentPrices.filter((p: any) => p.id !== product.id)
-    const newPrices = [...otherPrices, product]
-
-    // 3. Save back to DB
+    // Upsert na tabela relacional
     const { error: updateError } = await supabase
-        .from('clients')
-        .update({ custom_prices: newPrices })
-        .eq('id', clientId)
+        .from('client_product_prices')
+        .upsert({
+            client_id: clientId,
+            product_id: product.id,
+            price: product.price
+        }, {
+            onConflict: 'client_id, product_id'
+        })
 
     if (updateError) {
         console.error("Error updating client custom prices", updateError)

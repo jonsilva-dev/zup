@@ -35,14 +35,13 @@ export interface Product {
     id: string
     name: string
     unit: string
-    price: number
+    cost_price: number | null
 }
 
 // Add Client Interface
 interface Client {
     id: string
     name: string
-    custom_prices?: any[]
     // other fields...
 }
 
@@ -119,23 +118,15 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
         if (!selectedClientIdForProduct) return
 
         const product = allProducts.find(p => p.id === productId)
-        const client = allClients.find(c => c.id === selectedClientIdForProduct)
+        if (!product) return
 
-        if (!product || !client) return
-
-        let price = product.price || 0
-        let hasCustom = false
-
-        if (Array.isArray(client.custom_prices)) {
-            const custom = client.custom_prices.find((cp: any) => cp.id === productId)
-            if (custom) {
-                price = custom.price
-                hasCustom = true
-            }
-        }
-
-        setPriceToAdd(price)
-        setIsPriceMissing(!hasCustom)
+        // In the relational refactor, if we want to know right here on the client side 
+        // if they have a custom price, we would need to pass `client_product_prices` 
+        // array for all clients. Since it's an "add extra product" rare flow, 
+        // we prompt the user with the base product price, and they can edit it.
+        // It will upsert on save.
+        setPriceToAdd(product.cost_price || 0)
+        setIsPriceMissing(true) // Always prompt to confirm the entered price for extra products
     }
 
     const handleAddProduct = async () => {
