@@ -1,0 +1,146 @@
+﻿
+C:\Projetos\zup\src\app\(dashboard)\actions.ts
+   43:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Projetos\zup\src\app\(dashboard)\entrega\[id]\page.tsx
+   3:24  warning  'ClientDelivery' is defined but never used  @typescript-eslint/no-unused-vars
+   6:10  warning  'redirect' is defined but never used        @typescript-eslint/no-unused-vars
+  65:66  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+C:\Projetos\zup\src\app\(dashboard)\entrega\actions.ts
+  160:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  162:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Projetos\zup\src\app\(dashboard)\entrega\delivery-list.tsx
+   8:16  warning  'Trash' is defined but never used         @typescript-eslint/no-unused-vars
+   8:23  warning  'Check' is defined but never used         @typescript-eslint/no-unused-vars
+  12:75  warning  'DrawerFooter' is defined but never used  @typescript-eslint/no-unused-vars
+  12:89  warning  'DrawerClose' is defined but never used   @typescript-eslint/no-unused-vars
+  18:8   warning  'Link' is defined but never used          @typescript-eslint/no-unused-vars
+
+C:\Projetos\zup\src\app\(dashboard)\entrega\page.tsx
+   2:40  warning  'Product' is defined but never used       @typescript-eslint/no-unused-vars
+  27:51  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:39  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  75:41  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  94:63  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Projetos\zup\src\app\(dashboard)\faturas\[id]\page.tsx
+  94:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Projetos\zup\src\app\(dashboard)\faturas\[id]\validate-button.tsx
+  89:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Projetos\zup\src\app\(dashboard)\faturas\actions.ts
+   72:43  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   74:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  193:72  warning  'a' is defined but never used             @typescript-eslint/no-unused-vars
+  193:75  warning  'b' is defined but never used             @typescript-eslint/no-unused-vars
+
+C:\Projetos\zup\src\app\(dashboard)\pessoas\actions.ts
+  54:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  82:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Projetos\zup\src\app\(dashboard)\pessoas\cliente\[id]\actions.ts
+   7:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  41:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  52:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Projetos\zup\src\app\(dashboard)\pessoas\cliente\[id]\form.tsx
+   22:21   warning  'Trash2' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   72:24   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+   73:20   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  105:49   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  105:65   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  110:73   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  110:94   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  110:102  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  290:38   warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+C:\Projetos\zup\src\app\(dashboard)\pessoas\cliente\[id]\form.tsx:290:38
+  288 |                                     />
+  289 |
+> 290 |                                     {form.watch("type") === "PJ" && (
+      |                                      ^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  291 |                                         <FormField
+  292 |                                             control={form.control}
+  293 |                                             name="razao_social"  react-hooks/incompatible-library
+
+C:\Projetos\zup\src\app\(dashboard)\pessoas\cliente\[id]\page.tsx
+  30:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  52:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Projetos\zup\src\app\(dashboard)\pessoas\cliente\novo\actions.ts
+   7:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  41:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  56:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Projetos\zup\src\app\(dashboard)\pessoas\cliente\novo\form.tsx
+   54:11  warning  'router' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+  195:34  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+C:\Projetos\zup\src\app\(dashboard)\pessoas\cliente\novo\form.tsx:195:34
+  193 |                                 />
+  194 |
+> 195 |                                 {form.watch("type") === "PJ" && (
+      |                                  ^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  196 |                                     <FormField
+  197 |                                         control={form.control}
+  198 |                                         name="razao_social"  react-hooks/incompatible-library
+
+C:\Projetos\zup\src\app\(dashboard)\produtos\[id]\form.tsx
+  19:10  warning  'useState' is defined but never used      @typescript-eslint/no-unused-vars
+  42:14  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Projetos\zup\src\app\(dashboard)\produtos\actions.ts
+  8:7  warning  'productSchema' is assigned a value but only used as a type  @typescript-eslint/no-unused-vars
+
+C:\Projetos\zup\src\app\(dashboard)\produtos\novo\page.tsx
+  38:10  warning  'useState' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Projetos\zup\src\app\api\monthly-invoices\[id]\create-charge\route.ts
+  116:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Projetos\zup\src\components\bottom-nav.tsx
+  5:23  warning  'Plus' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Projetos\zup\src\components\chart-overview.tsx
+   38:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Projetos\zup\src\components\chart-overview.tsx:38:9
+  36 |
+  37 |     useEffect(() => {
+> 38 |         setMounted(true)
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  39 |         if (data && data.length > 0 && data[0].name !== "Sem dados") {
+  40 |             setActiveIndex(0) // Default to first item
+  41 |         }  react-hooks/set-state-in-effect
+   50:28  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  107:29  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/ban-ts-comment
+
+C:\Projetos\zup\src\components\recent-deliveries-list.tsx
+  4:10  warning  'Button' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Projetos\zup\src\components\user-form.tsx
+   74:23  warning  'result' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   90:23  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  107:23  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+C:\Projetos\zup\src\utils\supabase\middleware.ts
+  18:58  warning  'options' is defined but never used  @typescript-eslint/no-unused-vars
+
+Ô£û 60 problems (39 errors, 21 warnings)
+
