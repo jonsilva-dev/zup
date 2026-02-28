@@ -127,7 +127,7 @@ export async function getDashboardStats(month?: string) {
     })
 
     // Convert Map to Array, sort by revenue descending
-    let chartData = Array.from(chartMap.entries())
+    const chartData = Array.from(chartMap.entries())
         .map(([name, value]) => ({
             name,
             value

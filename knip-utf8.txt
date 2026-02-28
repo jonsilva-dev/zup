@@ -1,0 +1,49 @@
+﻿[93m[4mUnused files[24m[39m (11)
+check_schema.js                                    
+check_type.js                                      
+test10.js                                          
+test_action.js                                     
+test_update_10.js                                  
+src/components/ui/alert-dialog.tsx                 
+src/components/ui/radio-group.tsx                  
+src/components/ui/table.tsx                        
+src/utils/supabase/client.ts                       
+src/utils/supabase/database.types.ts               
+src/app/(dashboard)/pessoas/usuario/novo/actions.ts
+[93m[4mUnused dependencies[24m[39m (2)
+@radix-ui/react-alert-dialog  package.json:13:6
+date-fns                      package.json:18:6
+[93m[4mUnlisted dependencies[24m[39m (1)
+postcss  postcss.config.mjs
+[93m[4mUnused exports[24m[39m (27)
+buttonVariants            src/components/ui/button.tsx:64:18       
+CardFooter                src/components/ui/card.tsx:87:3          
+CardAction                src/components/ui/card.tsx:89:3          
+badgeVariants             src/components/ui/badge.tsx:48:17        
+useFormField              src/components/ui/form.tsx:159:3         
+FormDescription           src/components/ui/form.tsx:164:3         
+SelectGroup               src/components/ui/select.tsx:182:3       
+SelectLabel               src/components/ui/select.tsx:184:3       
+SelectScrollDownButton    src/components/ui/select.tsx:185:3       
+SelectScrollUpButton      src/components/ui/select.tsx:186:3       
+SelectSeparator           src/components/ui/select.tsx:187:3       
+DrawerPortal              src/components/ui/drawer.tsx:126:3       
+DrawerOverlay             src/components/ui/drawer.tsx:127:3       
+AvatarBadge               src/components/ui/avatar.tsx:106:3       
+AvatarGroup               src/components/ui/avatar.tsx:107:3       
+AvatarGroupCount          src/components/ui/avatar.tsx:108:3       
+DropdownMenuPortal        src/components/ui/dropdown-menu.tsx:243:3
+DropdownMenuGroup         src/components/ui/dropdown-menu.tsx:246:3
+DropdownMenuCheckboxItem  src/components/ui/dropdown-menu.tsx:249:3
+DropdownMenuRadioGroup    src/components/ui/dropdown-menu.tsx:250:3
+DropdownMenuRadioItem     src/components/ui/dropdown-menu.tsx:251:3
+DropdownMenuShortcut      src/components/ui/dropdown-menu.tsx:253:3
+DropdownMenuSub           src/components/ui/dropdown-menu.tsx:254:3
+DropdownMenuSubTrigger    src/components/ui/dropdown-menu.tsx:255:3
+DropdownMenuSubContent    src/components/ui/dropdown-menu.tsx:256:3
+tabsListVariants          src/components/ui/tabs.tsx:91:52         
+ScrollBar                 src/components/ui/scroll-area.tsx:58:22  
+[93m[4mUnused exported types[24m[39m (3)
+DeliveryItemInput  type       src/app/(dashboard)/entrega/actions.ts:29:13
+AsaasCustomerData  interface  src/lib/asaas.ts:4:18                       
+AsaasPaymentData   interface  src/lib/asaas.ts:12:18                      

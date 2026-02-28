@@ -39,6 +39,7 @@ export function ChartOverview({ data }: ChartOverviewProps) {
         if (data && data.length > 0 && data[0].name !== "Sem dados") {
             setActiveIndex(0) // Default to first item
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data])
 
     if (!mounted) return <div className="h-[350px] w-full flex items-center justify-center text-muted-foreground">Carregando gráfico...</div>
@@ -104,7 +105,7 @@ export function ChartOverview({ data }: ChartOverviewProps) {
                             stroke="none"
                             onClick={onPieClick}
                             className="cursor-pointer outline-none"
-                            // @ts-ignore
+                            // @ts-expect-error recharts ActiveIndex type mismatch
                             activeIndex={activeIndex ?? undefined}
                             onMouseEnter={onPieClick} // Make hover and click share the same logic
                         >
