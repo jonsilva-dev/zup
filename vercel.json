@@ -1,0 +1,8 @@
+{
+    "crons": [
+        {
+            "path": "/api/cron/close-monthly-invoices",
+            "schedule": "59 2 * * *"
+        }
+    ]
+}
