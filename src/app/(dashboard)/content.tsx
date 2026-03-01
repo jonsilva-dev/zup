@@ -16,6 +16,12 @@ const HIDDEN_NAV_ROUTES = [
     /^\/pessoas\/usuario\/.*$/
 ]
 
+const HIDDEN_HEADER_ROUTES = [
+    '/faturas',
+    // Matches /faturas/[id]
+    /^\/faturas\/[^/]+$/
+]
+
 interface DashboardContentProps {
     children: React.ReactNode
     user?: { name?: string | null } | null
@@ -31,9 +37,16 @@ export function DashboardContent({ children, user }: DashboardContentProps) {
         return route.test(pathname)
     })
 
+    const shouldHideHeader = shouldHideNav || HIDDEN_HEADER_ROUTES.some(route => {
+        if (typeof route === 'string') {
+            return pathname === route
+        }
+        return route.test(pathname)
+    })
+
     return (
         <div suppressHydrationWarning className={`min-h-screen w-full bg-neutral-50 dark:bg-neutral-950 ${shouldHideNav ? '' : 'pb-28'}`}>
-            {!shouldHideNav && <Header userName={user?.name} />}
+            {!shouldHideHeader && <Header userName={user?.name} />}
             <main className="flex-1 overflow-auto">
                 <div className="p-6">
                     {children}

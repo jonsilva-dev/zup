@@ -2,9 +2,18 @@ import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
+    // 0. Parse Search Params
+    const { searchParams } = new URL(request.url)
+    const force = searchParams.get('force') === 'true'
+    const queryMonth = searchParams.get('month') // Expected format YYYY-MM
+
     // 1. Validate Cron Secret
     const authHeader = request.headers.get("Authorization")
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    // If not local env, we strictly enforce CRON_SECRET. (In dev, process.env.CRON_SECRET might be undefined)
+    const expectedToken = process.env.CRON_SECRET || 'dev-secret'
+    if (process.env.NODE_ENV === 'production' && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        return new NextResponse("Unauthorized", { status: 401 })
+    } else if (process.env.NODE_ENV !== 'production' && authHeader !== `Bearer ${expectedToken}`) {
         return new NextResponse("Unauthorized", { status: 401 })
     }
 
@@ -23,16 +32,24 @@ export async function GET(request: Request) {
 
     // formatter.format(now) returns "DD/MM/YYYY"
     const parts = formatter.format(now).split("/")
-    const currentDayBRT = parseInt(parts[0], 10)
-    const currentMonthBRT = parseInt(parts[1], 10)
-    const currentYearBRT = parseInt(parts[2], 10)
+    let currentDayBRT = parseInt(parts[0], 10)
+    let currentMonthBRT = parseInt(parts[1], 10)
+    let currentYearBRT = parseInt(parts[2], 10)
 
     // Check what is the last day of this month in BRT
     // Month in JS Date is 0-indexed, so currentMonthBRT (which is 1-12) used as month index gives the NEXT month.
     // Day 0 of next month is the last day of current month.
-    const lastDayOfMonth = new Date(currentYearBRT, currentMonthBRT, 0).getDate()
+    let lastDayOfMonth = new Date(currentYearBRT, currentMonthBRT, 0).getDate()
 
-    if (currentDayBRT !== lastDayOfMonth) {
+    // If queryMonth is provided with force, override the month parameters for manual execution
+    if (force && queryMonth) {
+        const [qy, qm] = queryMonth.split('-')
+        currentYearBRT = parseInt(qy, 10)
+        currentMonthBRT = parseInt(qm, 10)
+        lastDayOfMonth = new Date(currentYearBRT, currentMonthBRT, 0).getDate()
+    }
+
+    if (!force && currentDayBRT !== lastDayOfMonth) {
         return NextResponse.json({
             message: "Not the last day of the month. Skipped.",
             day: currentDayBRT,

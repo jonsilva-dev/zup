@@ -1,9 +1,10 @@
 'use server'
 
 import { createClient } from "@/utils/supabase/server"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 
 export async function getInvoices(month: string) {
+    noStore()
     const supabase = await createClient()
 
     const [year, monthNum] = month.split('-')
@@ -94,6 +95,7 @@ export async function getInvoices(month: string) {
 // Since I used write_to_file with overwrite=true, I MUST include the other functions.
 
 export async function getInvoiceDetails(clientId: string, month: string) {
+    noStore()
     const supabase = await createClient()
 
     const [year, monthNum] = month.split('-')
@@ -191,11 +193,11 @@ export async function getInvoiceDetails(clientId: string, month: string) {
     })
 
     const formattedDeliveries = Array.from(deliveryMap.values()).sort((a, b) => {
-        // Sort by date desc (naive string sort works for YYYY-MM-DD but here we have DD/MM/YYYY)
-        // Actually we should rely on the DB sort which was 'date' desc.
-        // But map iteration order is insertion order, so likely fine if items came sorted.
-        // To be safe, we could parse date or just trust it.
-        return 0
+        // Sort by date desc
+        // Date format is DD/MM/YYYY, so we convert it to YYYY-MM-DD for comparison
+        const aDate = a.date.split('/').reverse().join('-')
+        const bDate = b.date.split('/').reverse().join('-')
+        return bDate.localeCompare(aDate)
     })
 
     const productSummary = Array.from(productMap.values()).sort((a, b) => a.name.localeCompare(b.name))
@@ -207,6 +209,51 @@ export async function getInvoiceDetails(clientId: string, month: string) {
         .eq('client_id', clientId)
         .eq('month', month)
         .single()
+
+    // Calculate previous month string for comparison
+    const numYear = parseInt(year)
+    const numMonth = parseInt(monthNum)
+    let prevYear = numYear
+    let prevMonth = numMonth - 1
+    if (prevMonth === 0) {
+        prevMonth = 12
+        prevYear -= 1
+    }
+    const previousMonthStr = `${prevYear}-${String(prevMonth).padStart(2, '0')}`
+
+    // Fetch previous month's total from history
+    // First check monthly_invoices, if not found or 0, check delivery_items directly by date
+    const prevStartDate = `${previousMonthStr}-01`
+    const prevEndDate = new Date(prevYear, prevMonth, 0).toISOString().split('T')[0]
+
+    let previousTotal = 0
+    const { data: prevStatus } = await supabase
+        .from('monthly_invoices')
+        .select('total')
+        .eq('client_id', clientId)
+        .eq('month', previousMonthStr)
+        .single()
+
+    if (prevStatus && prevStatus.total) {
+        previousTotal = prevStatus.total
+    } else {
+        // Fallback to calculating from delivery_items if no saved total was found
+        const { data: prevItems } = await supabase
+            .from('delivery_items')
+            .select(`
+                quantity,
+                unit_price,
+                deliveries!inner(date)
+            `)
+            .eq('client_id', clientId)
+            .gte('deliveries.date', prevStartDate)
+            .lte('deliveries.date', prevEndDate)
+
+        if (prevItems) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            previousTotal = prevItems.reduce((acc, item: any) => acc + ((Number(item.unit_price) || 0) * (Number(item.quantity) || 0)), 0)
+        }
+    }
 
     // Total for month
     const totalSales = formattedDeliveries.reduce((acc, d) => acc + d.total, 0)
@@ -220,6 +267,7 @@ export async function getInvoiceDetails(clientId: string, month: string) {
         month: month, // YYYY-MM
         status: invoiceStatus?.status || 'open',
         total: totalSales,
+        previousTotal: previousTotal, // Added for comparison
         deliveries: formattedDeliveries,
         productSummary
     }
@@ -248,6 +296,7 @@ export async function validateInvoice(clientId: string, month: string, total: nu
 }
 
 export async function getClientInvoiceHistory(clientId: string) {
+    noStore()
     const supabase = await createClient()
 
     const { data: invoices } = await supabase
