@@ -16,7 +16,6 @@ import {
     SheetClose
 } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { formatCurrency } from "@/utils/format"
 
 interface ProductSummary {
@@ -80,11 +79,7 @@ export function ValidateButton({ clientId, month, total, status, productSummary,
                 }
             }
 
-            toast.success("Fatura validada com sucesso!", {
-                description: total > 0
-                    ? "O status foi atualizado para validado e a cobrança foi gerada."
-                    : "O status foi atualizado para validado."
-            })
+            toast.success("Fatura validada!")
             setIsOpen(false)
         } catch (error: any) {
             toast.error("Erro na validação da fatura", {
@@ -97,9 +92,24 @@ export function ValidateButton({ clientId, month, total, status, productSummary,
     }
 
     if (status === 'validated') {
+        const handleCopyLink = async () => {
+            try {
+                const response = await fetch(`/api/monthly-invoices/${clientId}/payment-link?month=${month}`)
+                if (!response.ok) {
+                    const err = await response.json()
+                    throw new Error(err.error || 'Erro ao buscar link')
+                }
+                const { url } = await response.json()
+                await navigator.clipboard.writeText(url)
+                toast.success("Link copiado!")
+            } catch (error: any) {
+                toast.error(error.message || "Não foi possível copiar o link.")
+            }
+        }
+
         return (
-            <Button variant="secondary" disabled className="w-full md:w-auto">
-                Fatura Validada
+            <Button variant="outline" className="w-full md:w-auto" onClick={handleCopyLink}>
+                Copiar link da fatura
             </Button>
         )
     }
@@ -122,7 +132,7 @@ export function ValidateButton({ clientId, month, total, status, productSummary,
                     )}
                 </div>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-[90vh] sm:h-auto sm:max-w-lg">
+            <SheetContent side="bottom" className="sm:max-w-lg">
                 <SheetHeader>
                     <SheetTitle>Validar Fatura - {month}</SheetTitle>
                     <SheetDescription>
@@ -131,38 +141,36 @@ export function ValidateButton({ clientId, month, total, status, productSummary,
                     </SheetDescription>
                 </SheetHeader>
 
-                <ScrollArea className="max-h-[60vh] py-4">
-                    <div className="space-y-4">
-                        <div className="rounded-lg border p-3 bg-muted/20">
-                            <h3 className="font-semibold mb-2 text-sm uppercase text-muted-foreground">Resumo por Produto</h3>
-                            <div className="space-y-2">
-                                {productSummary.map((prod, idx) => (
-                                    <div key={idx} className="flex justify-between items-center text-sm">
-                                        <div className="flex-1">
-                                            <span className="font-medium">{prod.name}</span>
-                                            <span className="text-xs text-muted-foreground ml-2">x{prod.quantity}</span>
-                                        </div>
-                                        <div className="font-mono">
-                                            {formatCurrency(prod.total)}
-                                        </div>
+                <div className="py-4 px-4 space-y-4">
+                    <div className="rounded-lg border p-3 bg-muted/20">
+                        <h3 className="font-semibold mb-2 text-sm uppercase text-muted-foreground">Resumo por Produto</h3>
+                        <div className="space-y-2">
+                            {productSummary.map((prod, idx) => (
+                                <div key={idx} className="flex justify-between items-center text-sm">
+                                    <div className="flex-1">
+                                        <span className="font-medium">{prod.name}</span>
+                                        <span className="text-xs text-muted-foreground ml-2">x{prod.quantity}</span>
                                     </div>
-                                ))}
-                                {productSummary.length === 0 && (
-                                    <div className="text-sm text-muted-foreground italic">Nenhum produto registrado.</div>
-                                )}
-                            </div>
-                        </div>
-
-                        <Separator />
-
-                        <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg border border-primary/20">
-                            <span className="font-bold text-lg">Total Geral</span>
-                            <span className="font-bold text-2xl text-primary">
-                                {formatCurrency(total)}
-                            </span>
+                                    <div className="font-mono">
+                                        {formatCurrency(prod.total)}
+                                    </div>
+                                </div>
+                            ))}
+                            {productSummary.length === 0 && (
+                                <div className="text-sm text-muted-foreground italic">Nenhum produto registrado.</div>
+                            )}
                         </div>
                     </div>
-                </ScrollArea>
+
+                    <Separator />
+
+                    <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
+                        <span className="font-bold text-lg">Total Geral</span>
+                        <span className="font-bold text-2xl text-primary">
+                            {formatCurrency(total)}
+                        </span>
+                    </div>
+                </div>
 
                 <SheetFooter className="mt-4 gap-2">
                     <SheetClose asChild>

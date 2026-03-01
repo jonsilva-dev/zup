@@ -1,5 +1,13 @@
 const ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/api/v3';
-const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
+
+// O dotenv expande $VAR como variável — guarde o token SEM o $ no .env.local.
+// Ex: ASAAS_API_KEY=aact_hmlg_... (sem o $ inicial)
+// O código reinsere o $ automaticamente ao enviar para a API.
+const _rawKey = process.env.ASAAS_API_KEY;
+const ASAAS_API_KEY = _rawKey
+    ? (_rawKey.startsWith('$') ? _rawKey : `$${_rawKey}`)
+    : undefined;
+
 
 export interface AsaasCustomerData {
     name: string;
@@ -45,6 +53,19 @@ async function asaasFetch(endpoint: string, options: RequestInit = {}) {
     return data;
 }
 
+export async function findAsaasCustomerByCpfCnpj(cpfCnpj: string): Promise<string | null> {
+    try {
+        const data = await asaasFetch(`/customers?cpfCnpj=${encodeURIComponent(cpfCnpj)}`);
+        if (data?.data && data.data.length > 0) {
+            return data.data[0].id as string;
+        }
+        return null;
+    } catch {
+        // Se a busca falhar, retorna null e tentamos criar o cliente
+        return null;
+    }
+}
+
 export async function createAsaasCustomer(data: AsaasCustomerData) {
     return asaasFetch('/customers', {
         method: 'POST',
@@ -55,9 +76,10 @@ export async function createAsaasCustomer(data: AsaasCustomerData) {
 export async function createAsaasPayment(data: AsaasPaymentData) {
     return asaasFetch('/payments', {
         method: 'POST',
-        body: JSON.stringify({
-            ...data,
-            // Asaas usually requires a due date, so ensure it is passed correctly.
-        }),
+        body: JSON.stringify(data),
     });
+}
+
+export async function getAsaasPaymentById(chargeId: string) {
+    return asaasFetch(`/payments/${chargeId}`);
 }
