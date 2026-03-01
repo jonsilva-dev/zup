@@ -67,7 +67,7 @@ export default async function FaturaDetalhePage({
                             <h1 className="text-2xl font-bold tracking-tight">{client.name}</h1>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Badge variant={status === 'validated' ? 'default' : status === 'fechado' ? 'secondary' : 'outline'}>
+                            <Badge variant={status === 'fechado' ? 'secondary' : 'outline'} className={status === 'validated' ? 'bg-blue-300 text-blue-950 border-transparent' : ''}>
                                 Fatura {status === 'validated' ? 'Validada' : status === 'fechado' ? 'Fechada' : 'Em Aberto'}
                             </Badge>
                             <span className="text-sm text-muted-foreground capitalize">{capitalizedMonth}</span>
@@ -158,7 +158,7 @@ export default async function FaturaDetalhePage({
                                             }
                                         </span>
                                         {(!hist.isCalculated || hist.status !== 'open') && (
-                                            <Badge variant={hist.status === 'validated' ? 'default' : hist.status === 'fechado' ? 'secondary' : 'outline'} className="text-[10px] h-5 px-2 rounded-full font-medium">
+                                            <Badge variant={hist.status === 'fechado' ? 'secondary' : 'outline'} className={`text-[10px] h-5 px-2 rounded-full font-medium${hist.status === 'validated' ? ' bg-blue-300 text-blue-950 border-transparent' : ''}`}>
                                                 {hist.status === 'validated' ? 'Validada' : hist.status === 'fechado' ? 'Fechada' : 'Em Aberto'}
                                             </Badge>
                                         )}
