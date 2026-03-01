@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
@@ -12,6 +12,7 @@ interface MonthSelectorProps {
 export function MonthSelector({ minMonth, maxMonth }: MonthSelectorProps) {
     const router = useRouter()
     const searchParams = useSearchParams()
+    const pathname = usePathname()
 
     // Default to current month if not in params
     const currentParam = searchParams.get('month')
@@ -28,13 +29,17 @@ export function MonthSelector({ minMonth, maxMonth }: MonthSelectorProps) {
     const handlePrevious = () => {
         const prevDate = new Date(year, month - 2) // month is 1-based, so -2 gives prev month 0-based index
         const newMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`
-        router.push(`/?month=${newMonth}`)
+        const params = new URLSearchParams(searchParams?.toString() || '')
+        params.set('month', newMonth)
+        router.push(`${pathname}?${params.toString()}`)
     }
 
     const handleNext = () => {
         const nextDate = new Date(year, month) // month is 1-based, so this gives next month 0-based index
         const newMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`
-        router.push(`/?month=${newMonth}`)
+        const params = new URLSearchParams(searchParams?.toString() || '')
+        params.set('month', newMonth)
+        router.push(`${pathname}?${params.toString()}`)
     }
 
     // Constraints logic

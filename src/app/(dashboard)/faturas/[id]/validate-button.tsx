@@ -57,8 +57,8 @@ export function ValidateButton({ clientId, month, total, status, productSummary,
         isPastClosing = true
     }
 
-    // Force disabled if not past closing, unless specifically overriden (e.g. for testing, though user didn't ask)
-    const isButtonDisabled = disabled || !isPastClosing || status === 'validated' || isLoading
+    // Force disabled if status is not 'fechado' OR if it's already 'validated' OR if loading
+    const isButtonDisabled = disabled || status !== 'fechado' || isLoading
 
     const handleValidate = async () => {
         setIsLoading(true)
@@ -115,9 +115,9 @@ export function ValidateButton({ clientId, month, total, status, productSummary,
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Validar Fatura
                     </Button>
-                    {!isPastClosing && (
+                    {status === 'open' && (
                         <p className="text-xs text-muted-foreground mt-1 text-center">
-                            Validar após fechamento
+                            Aguardando fechamento do mês
                         </p>
                     )}
                 </div>

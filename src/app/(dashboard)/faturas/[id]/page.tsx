@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, ChevronRight, ArrowLeft } from "lucide-react"
+import { Calendar, ChevronRight, ArrowLeft, TrendingUp, TrendingDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getInvoiceDetails, getClientInvoiceHistory } from "../actions"
 import { ValidateButton } from "./validate-button"
@@ -28,7 +28,7 @@ export default async function FaturaDetalhePage({
         getClientInvoiceHistory(id)
     ])
 
-    const { client, month, status, total, deliveries } = details
+    const { client, month, status, total, previousTotal, deliveries } = details
 
     // Format month for display
     const [y, m] = month.split('-')
@@ -36,13 +36,27 @@ export default async function FaturaDetalhePage({
     const monthName = dateObj.toLocaleDateString('pt-BR', { month: 'long' })
     const capitalizedMonth = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} - ${y}`
 
+    let percentageChange = 0
+    let isTrendUp = true
+
+    if (previousTotal && previousTotal > 0) {
+        percentageChange = ((total - previousTotal) / previousTotal) * 100
+        isTrendUp = percentageChange >= 0
+    } else if (total > 0 && (!previousTotal || previousTotal === 0)) {
+        // Technically infinite growth from 0, but let's just show 100% or omit.
+        percentageChange = 100
+        isTrendUp = true
+    }
+
+    const absPercentage = Math.abs(percentageChange).toFixed(1)
+
     return (
-        <div className="pb-24 space-y-6">
+        <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div className="space-y-4">
                     <div>
                         <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 -ml-2 text-muted-foreground hover:text-foreground" asChild>
-                            <Link href="/faturas">
+                            <Link href={`/faturas?month=${selectedMonth}`}>
                                 <ArrowLeft className="size-6" strokeWidth={1.5} />
                                 <span className="sr-only">Voltar</span>
                             </Link>
@@ -53,8 +67,8 @@ export default async function FaturaDetalhePage({
                             <h1 className="text-2xl font-bold tracking-tight">{client.name}</h1>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Badge variant={status === 'validated' ? 'secondary' : 'outline'}>
-                                Fatura {status === 'validated' ? 'Validada' : 'Em Aberto'}
+                            <Badge variant={status === 'validated' ? 'default' : status === 'fechado' ? 'secondary' : 'outline'}>
+                                Fatura {status === 'validated' ? 'Validada' : status === 'fechado' ? 'Fechada' : 'Em Aberto'}
                             </Badge>
                             <span className="text-sm text-muted-foreground capitalize">{capitalizedMonth}</span>
                         </div>
@@ -71,15 +85,21 @@ export default async function FaturaDetalhePage({
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-                <Card className={`border-primary/20 ${status === 'validated' ? 'bg-secondary/10' : 'bg-primary/5'}`}>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Total ({capitalizedMonth})</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-bold text-primary">
-                            {formatCurrency(total)}
+                <Card className="bg-neutral-200 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-800 shadow-sm overflow-hidden rounded-xl">
+                    <div className="flex flex-col items-start w-full text-left gap-1 px-6 py-4">
+                        <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400 font-sans">
+                            Total
+                        </span>
+                        <div className="text-2xl font-bold flex flex-col justify-start w-full gap-1">
+                            <span className="text-foreground">{formatCurrency(total)}</span>
+                            {previousTotal !== undefined && (
+                                <div className={`flex items-center text-xs font-medium ${isTrendUp ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
+                                    {isTrendUp ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                                    <span>{absPercentage}% mês anterior</span>
+                                </div>
+                            )}
                         </div>
-                    </CardContent>
+                    </div>
                 </Card>
             </div>
 
@@ -93,18 +113,13 @@ export default async function FaturaDetalhePage({
                     <div className="space-y-2">
                         {deliveries.map((delivery: any) => (
                             <Link href={`/entrega/${delivery.id}?clientId=${client.id}`} key={delivery.id} className="block hover:opacity-80 transition-opacity">
-                                <div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm hover:bg-muted/50 transition-colors">
-                                    <div className="flex items-center space-x-4">
-                                        <div className="bg-muted p-2 rounded-full hidden sm:block">
-                                            <Calendar className="h-4 w-4" />
-                                        </div>
-                                        <div>
-                                            <div className="font-medium">{delivery.date}</div>
-                                            <div className="text-xs text-muted-foreground">Entregador: {delivery.deliverer}</div>
-                                        </div>
+                                <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-medium leading-none">{delivery.date}</p>
+                                        <p className="text-sm text-muted-foreground">{delivery.deliverer}</p>
                                     </div>
-                                    <div className="text-right">
-                                        <div className="font-bold text-sm">{formatCurrency(delivery.total)}</div>
+                                    <div className="font-bold">
+                                        {formatCurrency(delivery.total)}
                                     </div>
                                 </div>
                             </Link>
@@ -113,7 +128,7 @@ export default async function FaturaDetalhePage({
                 )}
             </div>
 
-            <div className="space-y-4 pt-4 border-t">
+            <div className="space-y-4">
                 <h2 className="text-lg font-semibold">Histórico de Faturas</h2>
                 <div className="space-y-2">
                     {history.map((hist) => {
@@ -128,26 +143,28 @@ export default async function FaturaDetalhePage({
                             <Link
                                 href={`/faturas/${client.id}?month=${hist.month}`}
                                 key={hist.month}
-                                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors border ${isCurrent ? 'bg-primary/5 border-primary/20' : 'hover:bg-muted/50 border-transparent'}`}
+                                className={`flex items-start justify-between p-4 rounded-xl cursor-pointer transition-colors border ${isCurrent ? 'bg-neutral-200 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-800 shadow-sm' : 'hover:bg-muted/50 border-neutral-200/50 dark:border-neutral-800/50'}`}
                             >
-                                <div className="font-medium">
-                                    {hCapMonth}
-                                    {isCurrent && <span className="ml-2 text-xs text-muted-foreground">(Visualizando)</span>}
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <div className="text-right flex flex-col items-end gap-1">
-                                        <span className="font-bold text-sm block">
+                                <div className="space-y-1.5 flex-1">
+                                    <div className="font-medium text-[15px] flex items-center">
+                                        {hCapMonth}
+                                        {isCurrent && <span className="ml-2 text-xs text-muted-foreground font-normal">(Visualizando)</span>}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-bold text-base leading-none">
                                             {hist.isCalculated && hist.status === 'open'
-                                                ? <Badge variant="outline" className="font-normal">Em Aberto</Badge>
+                                                ? <Badge variant="outline" className="font-normal text-muted-foreground border-transparent px-0 h-auto">Em Aberto</Badge>
                                                 : formatCurrency(hist.total)
                                             }
                                         </span>
                                         {(!hist.isCalculated || hist.status !== 'open') && (
-                                            <Badge variant={hist.status === 'validated' ? 'secondary' : 'outline'} className="text-[10px] h-5 px-1.5">
-                                                {hist.status === 'validated' ? 'Validado' : 'Em Aberto'}
+                                            <Badge variant={hist.status === 'validated' ? 'default' : hist.status === 'fechado' ? 'secondary' : 'outline'} className="text-[10px] h-5 px-2 rounded-full font-medium">
+                                                {hist.status === 'validated' ? 'Validada' : hist.status === 'fechado' ? 'Fechada' : 'Em Aberto'}
                                             </Badge>
                                         )}
                                     </div>
+                                </div>
+                                <div className="flex items-center pl-3">
                                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                 </div>
                             </Link>
