@@ -42,21 +42,25 @@ export interface Product {
 interface Client {
     id: string
     name: string
-    // other fields...
+    client_product_prices?: { product_id: string; price: number }[]
 }
 
 interface DeliveryListProps {
     initialDeliveries: ClientDelivery[]
     allProducts: Product[]
     allClients: Client[]
-    deliveryId?: string | number // Optional: For Edit Mode
-    initialDate?: string // Optional: Original date of delivery
+    deliveryId?: string | number
+    initialDate?: string
+    currentDate?: string
+    scheduledCount?: number // Total clients scheduled for this day (before filter)
 }
 
-export function DeliveryList({ initialDeliveries, allProducts, allClients, deliveryId, initialDate }: DeliveryListProps) {
+export function DeliveryList({ initialDeliveries, allProducts, allClients, deliveryId, initialDate, currentDate, scheduledCount = 0 }: DeliveryListProps) {
 
     const [deliveries, setDeliveries] = useState<ClientDelivery[]>(initialDeliveries)
     const [confirmationOpen, setConfirmationOpen] = useState(false)
+    const [datePickerOpen, setDatePickerOpen] = useState(false)
+    const [pickedDate, setPickedDate] = useState<string>(currentDate || '')
     const router = useRouter()
 
     // State for "Add Product"
@@ -74,10 +78,27 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
     const [addClientOpen, setAddClientOpen] = useState(false)
     const [clientToAdd, setClientToAdd] = useState<string>("")
 
-    // Helper to get formatted date string
+    // Formatted display of the active date
     const today = initialDate
         ? new Date(initialDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
-        : new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+        : currentDate
+            ? new Date(currentDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+            : new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+
+    // Max date = today
+    const todayStr = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }).split('/').reverse().join('-')
+
+    const isRetroactive = !!(currentDate && currentDate !== todayStr)
+
+    const handleApplyDate = () => {
+        if (!pickedDate) return
+        setDatePickerOpen(false)
+        router.replace(`/entrega?date=${pickedDate}`)
+    }
+
+    const handleUseToday = () => {
+        router.replace('/entrega')
+    }
 
 
     // Check for changes to show "Save" button
@@ -120,13 +141,19 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
         const product = allProducts.find(p => p.id === productId)
         if (!product) return
 
-        // In the relational refactor, if we want to know right here on the client side 
-        // if they have a custom price, we would need to pass `client_product_prices` 
-        // array for all clients. Since it's an "add extra product" rare flow, 
-        // we prompt the user with the base product price, and they can edit it.
-        // It will upsert on save.
-        setPriceToAdd(product.cost_price || 0)
-        setIsPriceMissing(true) // Always prompt to confirm the entered price for extra products
+        // Check if this client already has a custom price for this product
+        const client = allClients.find(c => c.id === selectedClientIdForProduct)
+        const customPrice = client?.client_product_prices?.find(cp => cp.product_id === productId)
+
+        if (customPrice) {
+            // Client already has a price — use it, no prompt needed
+            setPriceToAdd(customPrice.price)
+            setIsPriceMissing(false)
+        } else {
+            // No price defined — prompt user to enter one
+            setPriceToAdd(product.cost_price || 0)
+            setIsPriceMissing(true)
+        }
     }
 
     const handleAddProduct = async () => {
@@ -226,10 +253,10 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
 
             if (deliveryId) {
                 await updateDeliveryAction(deliveryId, inputData)
-                toast.success("Entrega atualizada com sucesso!")
+                toast.success("Entrega atualizada!")
             } else {
-                await saveDeliveryAction(inputData)
-                toast.success("Entrega confirmada e salva com sucesso!")
+                await saveDeliveryAction(inputData, currentDate)
+                toast.success("Entrega confirmada!")
             }
 
             setConfirmationOpen(false)
@@ -269,9 +296,28 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
                     <div className="flex items-center justify-between gap-4">
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight">{deliveryId ? "Editar Entrega" : "Registro de Entrega"}</h1>
-                            <p className="text-sm text-muted-foreground capitalize flex items-center gap-1 mt-1">
-                                <Calendar className="h-3 w-3" /> {today}
-                            </p>
+                            <div className="flex items-center gap-2">
+                                <p className="text-sm text-muted-foreground capitalize flex items-center gap-1 mt-1">
+                                    <Calendar className="h-3 w-3" /> {today}
+                                </p>
+                                {!deliveryId && (
+                                    isRetroactive ? (
+                                        <button
+                                            onClick={handleUseToday}
+                                            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors mt-1"
+                                        >
+                                            Usar dia atual
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => setDatePickerOpen(true)}
+                                            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors mt-1"
+                                        >
+                                            Outra data
+                                        </button>
+                                    )
+                                )}
+                            </div>
                         </div>
 
                         {deliveryId && (
@@ -294,7 +340,11 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
             <div className="space-y-4">
                 {deliveries.length === 0 ? (
                     <EmptyState
-                        title="Todas as entregas agendadas para hoje já foram realizadas."
+                        title={
+                            scheduledCount === 0
+                                ? "Nenhuma entrega agendada para este dia da semana."
+                                : "Todas as entregas do dia já foram realizadas."
+                        }
                         action={
                             <Button onClick={() => setAddClientOpen(true)}>
                                 <Plus className="mr-2 h-4 w-4" />
@@ -504,6 +554,32 @@ export function DeliveryList({ initialDeliveries, allProducts, allClients, deliv
                     </Button>
                 </div>
             )}
+
+            {/* Date picker Drawer */}
+            <Drawer shouldScaleBackground={false} open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                <DrawerContent>
+                    <div className="mx-auto w-full max-w-sm">
+                        <DrawerHeader>
+                            <DrawerTitle>Selecionar Data</DrawerTitle>
+                        </DrawerHeader>
+                        <div className="p-4 space-y-4">
+                            <label className="block">
+                                <span className="sr-only">Data</span>
+                                <input
+                                    type="date"
+                                    value={pickedDate}
+                                    max={todayStr}
+                                    onChange={(e) => setPickedDate(e.target.value)}
+                                    className="w-full border rounded-md px-3 py-3 text-base bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                                />
+                            </label>
+                            <Button className="w-full" onClick={handleApplyDate} disabled={!pickedDate}>
+                                Aplicar
+                            </Button>
+                        </div>
+                    </div>
+                </DrawerContent>
+            </Drawer>
         </div>
     )
 }

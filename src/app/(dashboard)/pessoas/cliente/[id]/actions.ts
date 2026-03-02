@@ -47,6 +47,8 @@ export async function updateClientAction(id: string, data: any) {
     }
 
     // Replace-all Strategy for Schedules
+    // Only include products that are currently in the client's product list
+    const validProductIds = new Set((data.products || []).map((p: any) => p.id))
     await supabase.from('delivery_schedules').delete().eq('client_id', id)
     if (data.schedule && typeof data.schedule === 'object') {
         const schedulesToInsert: any[] = []
@@ -57,7 +59,8 @@ export async function updateClientAction(id: string, data: any) {
             if (productsForDay && typeof productsForDay === 'object') {
                 Object.keys(productsForDay).forEach((productId) => {
                     const quantity = productsForDay[productId]
-                    if (quantity > 0) {
+                    // Skip products that were removed from client's product list
+                    if (quantity > 0 && validProductIds.has(productId)) {
                         schedulesToInsert.push({
                             client_id: id,
                             day_of_week: dayOfWeek,

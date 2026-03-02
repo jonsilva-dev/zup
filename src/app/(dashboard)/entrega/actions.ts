@@ -35,7 +35,7 @@ export type DeliveryItemInput = {
     }[]
 }
 
-export async function saveDeliveryAction(deliveryData: DeliveryItemInput[]) {
+export async function saveDeliveryAction(deliveryData: DeliveryItemInput[], date?: string) {
     const supabase = await createClient()
 
     // 1. Get current user (Deliverer)
@@ -67,12 +67,14 @@ export async function saveDeliveryAction(deliveryData: DeliveryItemInput[]) {
         })
     })
 
+    // Use provided date or fallback to today in BRT
+    const deliveryDate = date || new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }).split('/').reverse().join('-')
+
     // 4. Insert into 'deliveries'
     const { data: delivery, error: deliveryError } = await supabase
         .from('deliveries')
         .insert({
-            // Use local date for Today instead of UTC to avoid "yesterday" issues late at night
-            date: new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }).split('/').reverse().join('-'), // "DD/MM/YYYY" -> "YYYY-MM-DD"
+            date: deliveryDate,
             deliverer_id: user.id,
             total_sales: totalSales,
             total_cost: totalCost,
