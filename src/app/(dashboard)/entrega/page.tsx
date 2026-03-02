@@ -1,44 +1,56 @@
 import { createClient } from "@/utils/supabase/server"
 import { DeliveryList, ClientDelivery, Product } from "./delivery-list"
 
-export default async function EntregaPage() {
+interface EntregaPageProps {
+    searchParams: Promise<{ date?: string }>
+}
+
+export default async function EntregaPage({ searchParams }: EntregaPageProps) {
     const supabase = await createClient()
+    const { date: dateParam } = await searchParams
 
     // Fetch all products for reference
     const { data: allProducts } = await supabase.from('products').select('*')
 
-    // Fetch all clients
-    const { data: clients } = await supabase.from('clients').select('*')
+    // Fetch all clients with their custom prices
+    const { data: clients } = await supabase
+        .from('clients')
+        .select('*, client_product_prices(product_id, price)')
 
     if (!clients || !allProducts) {
         return <div>Erro ao carregar dados.</div>
     }
 
-    // Get today's day of week (0 = Sunday, 1 = Monday, etc.)
-    const today = new Date().getDay().toString()
-    const todayStr = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }).split('/').reverse().join('-')
+    // Determine selected date — default to today in BRT
+    const todayBRT = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }).split('/').reverse().join('-')
+    const selectedDate = dateParam || todayBRT
 
-    // Find deliveries already made today
-    const { data: todaysDeliveries } = await supabase
+    // Get day of week (0=Sun…6=Sat) for the selected date
+    // Using T12:00:00 to avoid timezone shifting the date
+    const selectedDow = new Date(selectedDate + 'T12:00:00').getDay()
+
+    // Find deliveries already made on selected date
+    const { data: existingDeliveries } = await supabase
         .from('deliveries')
         .select('id')
-        .eq('date', todayStr)
+        .eq('date', selectedDate)
 
-    const deliveryIds = todaysDeliveries?.map((d: any) => d.id) || []
+    const deliveryIds = existingDeliveries?.map((d: any) => d.id) || []
     const deliveredClientIds = new Set<string>()
 
     if (deliveryIds.length > 0) {
-        const { data: todayItems } = await supabase
+        const { data: existingItems } = await supabase
             .from('delivery_items')
             .select('client_id')
             .in('delivery_id', deliveryIds)
 
-        if (todayItems) {
-            todayItems.forEach((item: any) => deliveredClientIds.add(item.client_id))
+        if (existingItems) {
+            existingItems.forEach((item: any) => deliveredClientIds.add(item.client_id))
         }
     }
 
-    // Load Schedules for today, along with related Client and Product and Product custom pricing
+    // Load Schedules for the selected date's day of week
+    // Same logic for both today and retroactive dates: filter by day_of_week
     const { data: rawSchedules, error: scheduleError } = await supabase
         .from('delivery_schedules')
         .select(`
@@ -61,11 +73,17 @@ export default async function EntregaPage() {
                 cost_price
             )
         `)
-        .eq('day_of_week', parseInt(today))
+        .eq('day_of_week', selectedDow)
 
     if (scheduleError) {
         console.error("Error fetching schedules:", scheduleError)
         return <div>Erro ao carregar roteiro de entregas.</div>
+    }
+
+    // Count total scheduled clients before filtering (to distinguish "no schedule" vs "all done")
+    const scheduledClientIds = new Set<string>()
+    if (rawSchedules) {
+        rawSchedules.forEach((s: any) => { if (s.client_id) scheduledClientIds.add(s.client_id) })
     }
 
     // Build the delivery list grouped by Client
@@ -86,11 +104,9 @@ export default async function EntregaPage() {
 
             const clientGroup = deliveryMap.get(schedule.client_id)!
 
-            // Find custom price specifically for this product
             let finalPrice = schedule.products.cost_price || 0
             const customPrices = schedule.clients?.client_product_prices
             if (customPrices && Array.isArray(customPrices)) {
-                // PostgREST might return all custom prices for this client, find the matching product
                 const customPriceRow = customPrices.find((cp: any) => cp.product_id === schedule.product_id)
                 if (customPriceRow) {
                     finalPrice = customPriceRow.price
@@ -109,5 +125,14 @@ export default async function EntregaPage() {
 
     const initialDeliveries: ClientDelivery[] = Array.from(deliveryMap.values())
 
-    return <DeliveryList initialDeliveries={initialDeliveries} allProducts={allProducts} allClients={clients} />
+    return (
+        <DeliveryList
+            key={selectedDate}
+            initialDeliveries={initialDeliveries}
+            allProducts={allProducts}
+            allClients={clients}
+            currentDate={selectedDate}
+            scheduledCount={scheduledClientIds.size}
+        />
+    )
 }
