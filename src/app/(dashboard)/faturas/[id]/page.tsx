@@ -67,7 +67,7 @@ export default async function FaturaDetalhePage({
                             <h1 className="text-2xl font-bold tracking-tight">{client.name}</h1>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Badge variant={status === 'fechado' ? 'secondary' : 'outline'} className={status === 'validated' ? 'bg-blue-300 text-blue-950 border-transparent' : ''}>
+                            <Badge variant={status === 'fechado' ? 'secondary' : 'outline'} className={status === 'validated' ? 'bg-neutral-200 text-neutral-800 border-transparent' : ''}>
                                 Fatura {status === 'validated' ? 'Validada' : status === 'fechado' ? 'Fechada' : 'Em Aberto'}
                             </Badge>
                             <span className="text-sm text-muted-foreground capitalize">{capitalizedMonth}</span>

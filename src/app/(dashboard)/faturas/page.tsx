@@ -117,7 +117,7 @@ export default async function FaturasPage({
                                     <div>
                                         <div className="font-semibold text-lg">{invoice.name}</div>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <Badge variant={invoice.status === 'fechado' ? 'secondary' : 'outline'} className={invoice.status === 'validated' ? 'bg-blue-300 text-blue-950 border-transparent' : ''}>
+                                            <Badge variant={invoice.status === 'fechado' ? 'secondary' : 'outline'} className={invoice.status === 'validated' ? 'bg-neutral-200 text-neutral-800 border-transparent' : ''}>
                                                 {invoice.status === 'validated' ? 'Validado' : invoice.status === 'fechado' ? 'Fechada' : 'Em Aberto'}
                                             </Badge>
                                             <span className="text-xs text-muted-foreground">
