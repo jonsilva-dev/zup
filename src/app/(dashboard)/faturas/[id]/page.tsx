@@ -67,8 +67,11 @@ export default async function FaturaDetalhePage({
                             <h1 className="text-2xl font-bold tracking-tight">{client.name}</h1>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Badge variant={status === 'fechado' ? 'secondary' : 'outline'} className={status === 'validated' ? 'bg-neutral-200 text-neutral-800 border-transparent' : ''}>
-                                Fatura {status === 'validated' ? 'Validada' : status === 'fechado' ? 'Fechada' : 'Em Aberto'}
+                            <Badge
+                                variant={status === 'fechado' || status === 'paid' ? 'secondary' : status === 'overdue' ? 'destructive' : 'outline'}
+                                className={`${status === 'validated' ? 'bg-neutral-200 text-neutral-800 border-transparent ' : ''}${status === 'paid' ? 'bg-green-100 text-green-800 border-transparent dark:bg-green-900/30 dark:text-green-400 ' : ''}`}
+                            >
+                                {status === 'validated' ? 'Validada' : status === 'fechado' ? 'Fechada' : status === 'paid' ? 'Paga' : status === 'overdue' ? 'Vencida' : status === 'cancelled' ? 'Cancelada' : 'Em Aberto'}
                             </Badge>
                             <span className="text-sm text-muted-foreground capitalize">{capitalizedMonth}</span>
                         </div>
@@ -158,8 +161,11 @@ export default async function FaturaDetalhePage({
                                             }
                                         </span>
                                         {(!hist.isCalculated || hist.status !== 'open') && (
-                                            <Badge variant={hist.status === 'fechado' ? 'secondary' : 'outline'} className={`text-[10px] h-5 px-2 rounded-full font-medium${hist.status === 'validated' ? ' bg-blue-300 text-blue-950 border-transparent' : ''}`}>
-                                                {hist.status === 'validated' ? 'Validada' : hist.status === 'fechado' ? 'Fechada' : 'Em Aberto'}
+                                            <Badge
+                                                variant={hist.status === 'fechado' || hist.status === 'paid' ? 'secondary' : hist.status === 'overdue' ? 'destructive' : 'outline'}
+                                                className={`text-[10px] h-5 px-2 rounded-full font-medium${hist.status === 'validated' ? ' bg-blue-300 text-blue-950 border-transparent' : ''}${hist.status === 'paid' ? ' bg-green-100 text-green-800 border-transparent dark:bg-green-900/30 dark:text-green-400' : ''}`}
+                                            >
+                                                {hist.status === 'validated' ? 'Validada' : hist.status === 'fechado' ? 'Fechada' : hist.status === 'paid' ? 'Paga' : hist.status === 'overdue' ? 'Vencida' : hist.status === 'cancelled' ? 'Cancelada' : 'Em Aberto'}
                                             </Badge>
                                         )}
                                     </div>
