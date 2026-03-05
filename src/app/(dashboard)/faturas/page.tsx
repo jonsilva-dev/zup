@@ -87,15 +87,15 @@ export default async function FaturasPage({
                         <AccordionContent className="px-6 pb-4 pt-1 border-t border-neutral-300 dark:border-neutral-700 mx-6">
                             <div className="flex flex-col space-y-3 pt-3">
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-neutral-600 dark:text-neutral-400">Total à receber</span>
+                                    <span className="text-neutral-600 dark:text-neutral-400">Total à receber (Aberto/Fechado/Validado)</span>
                                     <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(totalReceber)}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-neutral-600 dark:text-neutral-400">Total pago</span>
+                                    <span className="text-neutral-600 dark:text-neutral-400">Total Pago</span>
                                     <span className="font-semibold text-green-600 dark:text-green-500">{formatCurrency(totalPago)}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-neutral-600 dark:text-neutral-400">Total vencido</span>
+                                    <span className="text-neutral-600 dark:text-neutral-400">Total Vencido</span>
                                     <span className="font-semibold text-red-600 dark:text-red-500">{formatCurrency(totalVencido)}</span>
                                 </div>
                             </div>
@@ -117,8 +117,11 @@ export default async function FaturasPage({
                                     <div>
                                         <div className="font-semibold text-lg">{invoice.name}</div>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <Badge variant={invoice.status === 'fechado' ? 'secondary' : 'outline'} className={invoice.status === 'validated' ? 'bg-neutral-200 text-neutral-800 border-transparent' : ''}>
-                                                {invoice.status === 'validated' ? 'Validado' : invoice.status === 'fechado' ? 'Fechada' : 'Em Aberto'}
+                                            <Badge
+                                                variant={invoice.status === 'fechado' || invoice.status === 'paid' ? 'secondary' : invoice.status === 'overdue' ? 'destructive' : 'outline'}
+                                                className={`${invoice.status === 'validated' ? 'bg-neutral-200 text-neutral-800 border-transparent ' : ''}${invoice.status === 'paid' ? 'bg-green-100 text-green-800 border-transparent dark:bg-green-900/30 dark:text-green-400 ' : ''}`}
+                                            >
+                                                {invoice.status === 'validated' ? 'Validada' : invoice.status === 'fechado' ? 'Fechada' : invoice.status === 'paid' ? 'Paga' : invoice.status === 'overdue' ? 'Vencida' : invoice.status === 'cancelled' ? 'Cancelada' : 'Em Aberto'}
                                             </Badge>
                                             <span className="text-xs text-muted-foreground">
                                                 {invoice.deliveryCount} entregas
