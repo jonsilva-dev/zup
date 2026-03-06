@@ -91,7 +91,8 @@ export function ValidateButton({ clientId, month, total, status, productSummary,
         }
     }
 
-    if (status === 'validated') {
+    const postValidationStatuses = ['validated', 'paid', 'overdue', 'cancelled']
+    if (postValidationStatuses.includes(status)) {
         const handleCopyLink = async () => {
             try {
                 const response = await fetch(`/api/monthly-invoices/${clientId}/payment-link?month=${month}`)

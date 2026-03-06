@@ -87,7 +87,7 @@ export default async function FaturasPage({
                         <AccordionContent className="px-6 pb-4 pt-1 border-t border-neutral-300 dark:border-neutral-700 mx-6">
                             <div className="flex flex-col space-y-3 pt-3">
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-neutral-600 dark:text-neutral-400">Total à receber (Aberto/Fechado/Validado)</span>
+                                    <span className="text-neutral-600 dark:text-neutral-400">Total à receber</span>
                                     <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(totalReceber)}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
