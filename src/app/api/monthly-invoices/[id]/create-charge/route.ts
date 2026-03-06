@@ -136,7 +136,7 @@ export async function POST(
         })
 
         const chargeId = payment.id
-        const invoiceUrl = payment.invoiceUrl || payment.bankSlipUrl || null
+        const invoiceUrl = payment.bankSlipUrl || payment.invoiceUrl || null
 
         // 6. Salvar charge_id na fatura
         const { error: updateError } = await supabase
